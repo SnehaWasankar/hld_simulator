@@ -156,7 +156,7 @@ export default function ConfigPanel({ node, onUpdate, onDelete }: ConfigPanelPro
             <div className="bg-gray-50 rounded-md p-2">
               <div className="text-gray-400">Cost/hr</div>
               <div className="font-mono font-semibold">
-                ${selectedService.baseCostPerHour.toFixed(4)}
+                ${(data.config.customCostPerHour ?? selectedService.baseCostPerHour).toFixed(4)}
               </div>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function ConfigPanel({ node, onUpdate, onDelete }: ConfigPanelPro
             type="number"
             step="0.001"
             min="0"
-            placeholder={selectedService?.baseCostPerHour.toFixed(4)}
+            placeholder={selectedService ? (data.config.customCostPerHour ?? selectedService.baseCostPerHour).toFixed(4) : ''}
             value={data.config.customCostPerHour ?? ''}
             onChange={(e) => {
               const val = e.target.value;
