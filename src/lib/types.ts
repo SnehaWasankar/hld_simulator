@@ -25,6 +25,8 @@ export interface AwsServiceOption {
   maxRps: number; // max requests per second per instance
   maxThroughputMBps: number; // max throughput in MB/s per instance
   description: string;
+  pricingLastUpdated: string; // ISO date when pricing was last updated
+  pricingDisclaimer: string; // Disclaimer about pricing accuracy
 }
 
 export interface ComponentConfig {

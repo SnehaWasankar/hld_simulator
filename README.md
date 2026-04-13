@@ -1,3 +1,7 @@
+# ArchScope
+
+ArchScope is a high-level design (HLD) simulator that allows you to design, visualize, and test system architectures with real-time performance simulations.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

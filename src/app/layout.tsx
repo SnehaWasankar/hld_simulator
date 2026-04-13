@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HLD Simulator - System Design Visualizer & Simulator",
+  title: "ArchScope - System Design Visualizer & Simulator",
   description: "Design, simulate, and optimize high-level system architectures with real AWS service costs and latency modeling",
 };
 

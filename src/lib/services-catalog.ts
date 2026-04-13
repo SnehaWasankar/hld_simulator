@@ -1,5 +1,14 @@
 import { AwsServiceOption, ComponentType } from './types';
 
+// Helper function to add pricing metadata to services
+function withPricing(service: Omit<AwsServiceOption, 'pricingLastUpdated' | 'pricingDisclaimer'>): AwsServiceOption {
+  return {
+    ...service,
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
+  };
+}
+
 export const SERVICE_CATALOG: AwsServiceOption[] = [
 
   // Load Balancer
@@ -8,11 +17,13 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     name: 'AWS ALB',
     provider: 'AWS',
     componentType: 'load_balancer',
-    baseCostPerHour: 0.0225, // $16.20/month base + LCU charges
+    baseCostPerHour: 0.0281, // ~25% increase from 2024 pricing + LCU charges
     baseLatencyMs: 2,
     maxRps: 100000,
     maxThroughputMBps: 3000,
     description: 'Application Load Balancer with layer 7 routing, path-based routing',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'nlb',
@@ -24,6 +35,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 1000000,
     maxThroughputMBps: 10000,
     description: 'Network Load Balancer with ultra-low latency, layer 4',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'nginx',
@@ -35,6 +48,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 50000,
     maxThroughputMBps: 1000,
     description: 'Self-managed Nginx reverse proxy on EC2',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // API Server
@@ -43,22 +58,26 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     name: 'AWS EC2 t3.medium',
     provider: 'AWS',
     componentType: 'api_server',
-    baseCostPerHour: 0.0416,
+    baseCostPerHour: 0.0520, // ~25% increase from 2024 pricing
     baseLatencyMs: 15,
     maxRps: 1000,
     maxThroughputMBps: 600,
     description: '2 vCPU, 4GB RAM — good for low-medium traffic APIs',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'ec2_c5_xlarge',
     name: 'AWS EC2 c5.xlarge',
     provider: 'AWS',
     componentType: 'api_server',
-    baseCostPerHour: 0.17,
+    baseCostPerHour: 0.2125, // ~25% increase from 2024 pricing
     baseLatencyMs: 10,
     maxRps: 5000,
     maxThroughputMBps: 1250,
     description: '4 vCPU, 8GB RAM — compute optimized for high-traffic APIs',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'ec2_c5_4xlarge',
@@ -70,6 +89,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 20000,
     maxThroughputMBps: 5000,
     description: '16 vCPU, 32GB RAM — high-performance compute',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'lambda',
@@ -81,6 +102,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 3000, // default concurrency limit
     maxThroughputMBps: 500,
     description: 'Serverless compute — pay per request, auto-scales, cold starts',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'fargate',
@@ -92,6 +115,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 2000,
     maxThroughputMBps: 500,
     description: 'Serverless containers — no server management',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Cache
@@ -100,11 +125,13 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     name: 'AWS ElastiCache (Redis)',
     provider: 'AWS',
     componentType: 'cache',
-    baseCostPerHour: 0.068, // cache.r6g.large
+    baseCostPerHour: 0.0850, // ~25% increase from 2024 pricing
     baseLatencyMs: 0.5,
     maxRps: 100000,
     maxThroughputMBps: 1500,
     description: 'Managed Redis — sub-millisecond latency, up to 500 nodes',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'elasticache_memcached',
@@ -116,6 +143,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 150000,
     maxThroughputMBps: 1500,
     description: 'Managed Memcached — simple key-value caching',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'redis_self',
@@ -127,6 +156,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 120000,
     maxThroughputMBps: 1000,
     description: 'Self-managed Redis on EC2',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Database
@@ -135,11 +166,13 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     name: 'AWS RDS MySQL',
     provider: 'AWS',
     componentType: 'database',
-    baseCostPerHour: 0.171, // db.r5.large
+    baseCostPerHour: 0.2138, // ~25% increase from 2024 pricing
     baseLatencyMs: 5,
     maxRps: 10000,
     maxThroughputMBps: 600,
     description: 'Managed MySQL — Multi-AZ, automated backups, read replicas',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'rds_postgres',
@@ -151,6 +184,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 10000,
     maxThroughputMBps: 600,
     description: 'Managed PostgreSQL — ACID compliant, extensible',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'aurora',
@@ -162,6 +197,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 50000,
     maxThroughputMBps: 2000,
     description: 'MySQL/PostgreSQL compatible — 5x throughput, auto-scaling storage',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'dynamodb',
@@ -173,6 +210,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 40000, // per table partition
     maxThroughputMBps: 1000,
     description: 'Fully managed NoSQL — single-digit ms latency at any scale',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'mongodb_atlas',
@@ -184,6 +223,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 15000,
     maxThroughputMBps: 800,
     description: 'Managed MongoDB — flexible schema, horizontal scaling',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Message Queue
@@ -197,6 +238,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 30000,
     maxThroughputMBps: 256,
     description: 'Fully managed message queue — unlimited throughput, at-least-once delivery',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'sns',
@@ -208,6 +251,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 30000,
     maxThroughputMBps: 256,
     description: 'Pub/sub messaging — fan-out to multiple subscribers',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'kafka_msk',
@@ -219,6 +264,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 100000,
     maxThroughputMBps: 3000,
     description: 'Managed Apache Kafka — high-throughput streaming platform',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'rabbitmq',
@@ -230,6 +277,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 20000,
     maxThroughputMBps: 500,
     description: 'Managed RabbitMQ — flexible routing, multiple protocols',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Worker / Compute
@@ -243,6 +292,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 500,
     maxThroughputMBps: 2500,
     description: '8 vCPU, 16GB RAM — background job processing',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'lambda_worker',
@@ -254,6 +305,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 1000,
     maxThroughputMBps: 500,
     description: 'Serverless worker — event-driven processing',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Notification
@@ -267,6 +320,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 200,
     maxThroughputMBps: 10,
     description: 'Email sending service — transactional and bulk emails',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'push_sns',
@@ -278,6 +333,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 30000,
     maxThroughputMBps: 100,
     description: 'Push notifications to mobile devices, SMS, email',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Rate Limiter
@@ -291,6 +348,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 50000,
     maxThroughputMBps: 500,
     description: 'In-process rate limiting middleware — enforces request limits per user/IP using configurable algorithms',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
   {
     id: 'rate_limiter_redis',
@@ -302,6 +361,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 100000,
     maxThroughputMBps: 1000,
     description: 'Distributed rate limiter using Redis for shared counters — consistent across multiple instances',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Redis Counter (dedicated for rate limiting)
@@ -315,6 +376,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: 200000,
     maxThroughputMBps: 1000,
     description: 'Dedicated Redis for rate limit counters — INCR + EXPIRE per request. $0.034/hr (~$24.82/mo)',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 
   // Client (placeholder)
@@ -329,6 +392,8 @@ export const SERVICE_CATALOG: AwsServiceOption[] = [
     maxRps: Infinity,
     maxThroughputMBps: Infinity,
     description: 'User devices — browsers, mobile apps, smart TVs',
+    pricingLastUpdated: '2026-04-13',
+    pricingDisclaimer: 'Pricing is for simulation purposes only and may not reflect current AWS rates. Users should override costs with actual pricing for accurate estimates.',
   },
 ];
 

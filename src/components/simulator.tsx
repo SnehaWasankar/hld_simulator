@@ -47,7 +47,7 @@ import {
   Settings2,
   BarChart3,
   Boxes,
-  Cpu,
+  Network,
   Zap,
 } from 'lucide-react';
 
@@ -91,7 +91,7 @@ function useResizable(initial: number, min: number, max: number, inverted = fals
   return { size, onMouseDown };
 }
 
-const STORAGE_KEY = 'hld-simulator-state';
+const STORAGE_KEY = 'archscope-state';
 
 function loadFromStorage(): { nodes: Node<SimulationNodeData>[]; edges: Edge[]; params: SimulationParams } | null {
   if (typeof window === 'undefined') return null;
@@ -369,8 +369,8 @@ export default function Simulator() {
       <div className="h-12 border-b bg-white flex items-center justify-between px-4 flex-shrink-0 z-10">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-blue-600" />
-            <h1 className="font-bold text-gray-800">HLD Simulator</h1>
+            <Network className="w-5 h-5 text-gray-900" />
+            <h1 className="font-bold text-gray-800">ArchScope</h1>
           </div>
           <Badge variant="outline" className="text-[10px]">
             {nodes.length} components

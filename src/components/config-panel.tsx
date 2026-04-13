@@ -163,6 +163,45 @@ export default function ConfigPanel({ node, onUpdate, onDelete }: ConfigPanelPro
         </div>
       )}
 
+      {/* Custom Cost Configuration */}
+      <Separator />
+      <div className="space-y-3">
+        <h4 className="text-xs font-semibold text-gray-500 uppercase">Cost Configuration</h4>
+        
+        <div className="space-y-1.5">
+          <Label className="text-xs">Custom Cost per Hour ($)</Label>
+          <Input
+            type="number"
+            step="0.001"
+            min="0"
+            placeholder={selectedService?.baseCostPerHour.toFixed(4)}
+            value={data.config.customCostPerHour ?? ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '') {
+                onUpdate(node.id, { config: { ...data.config, customCostPerHour: undefined } });
+              } else {
+                const num = parseFloat(val);
+                if (!isNaN(num) && num >= 0) {
+                  onUpdate(node.id, { config: { ...data.config, customCostPerHour: num } });
+                }
+              }
+            }}
+            className="h-8 text-xs"
+          />
+          <p className="text-[10px] text-gray-400">
+            Override default pricing. Leave empty to use service default.
+          </p>
+          {selectedService && (
+            <p className="text-[10px] text-gray-500">
+              Default: ${selectedService.baseCostPerHour.toFixed(4)}/hr | 
+              Updated: {selectedService.pricingLastUpdated} | 
+              {selectedService.pricingDisclaimer}
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Cache-specific */}
       {data.componentType === 'cache' && (
         <>
