@@ -8,18 +8,25 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-  ChevronRight,
+  ArrowLeft,
+  BookOpen,
+  LayoutGrid,
+  Boxes,
   Play,
   Settings,
   BarChart3,
-  Zap,
-  Boxes,
-  LayoutGrid,
-  BookOpen,
-  ArrowRight,
-  CheckCircle,
-  ArrowLeft,
   Home,
+  ChevronRight,
+  Keyboard,
+  MousePointer,
+  Copy,
+  Scissors,
+  Undo2,
+  Redo2,
+  Trash2,
+  Zap,
+  CheckCircle,
+  ArrowRight,
 } from 'lucide-react';
 
 interface GuideSection {
@@ -69,6 +76,13 @@ const GetStartedPage = () => {
       description: 'Customize components and settings',
       icon: <Settings className="w-4 h-4" />,
       content: <ConfigurationContent />,
+    },
+    {
+      id: 'shortcuts',
+      title: 'Keyboard Shortcuts & Multi-Selection',
+      description: 'Master productivity features and advanced controls',
+      icon: <Keyboard className="w-4 h-4" />,
+      content: <ShortcutsContent />,
     },
     {
       id: 'analytics',
@@ -358,6 +372,41 @@ const InterfaceContent = () => (
               <div className="text-xs text-gray-600">View simulation results and analytics</div>
             </div>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Multi-Selection Features</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
+            <MousePointer className="w-5 h-5 text-blue-600" />
+            <div>
+              <h4 className="font-medium">Selection Box (Shift + Drag)</h4>
+              <p className="text-gray-600">Hold Shift and drag on empty canvas to select multiple components</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg">
+            <MousePointer className="w-5 h-5 text-green-600" />
+            <div>
+              <h4 className="font-medium">Multi-Select (Shift + Click)</h4>
+              <p className="text-gray-600">Hold Shift and click components to add/remove from selection</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-lg">
+            <MousePointer className="w-5 h-5 text-purple-600" />
+            <div>
+              <h4 className="font-medium">Group Movement</h4>
+              <p className="text-gray-600">Select multiple components and drag any one to move them together</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-yellow-50 p-4 rounded-lg">
+          <h4 className="font-medium mb-2 text-yellow-800">💡 Pro Tip:</h4>
+          <p className="text-yellow-700 text-sm">Look for the blue selection rings and animated borders on selected components. The top bar shows a count of selected items.</p>
         </div>
       </CardContent>
     </Card>
@@ -704,6 +753,174 @@ const AnalyticsContent = () => (
           <p className="text-blue-700 text-sm">
             Each bottleneck includes specific recommendations for improving performance and capacity.
           </p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const ShortcutsContent = () => (
+  <div className="space-y-6">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Essential Keyboard Shortcuts</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <MousePointer className="w-5 h-5 text-blue-600" />
+            <div>
+              <div className="font-medium text-sm">Selection Box</div>
+              <div className="text-xs text-gray-600">Shift + Drag on empty canvas</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <MousePointer className="w-5 h-5 text-green-600" />
+            <div>
+              <div className="font-medium text-sm">Multi-Select</div>
+              <div className="text-xs text-gray-600">Shift + Click components</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Undo2 className="w-5 h-5 text-purple-600" />
+            <div>
+              <div className="font-medium text-sm">Undo</div>
+              <div className="text-xs text-gray-600">Ctrl/Cmd + Z</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Redo2 className="w-5 h-5 text-orange-600" />
+            <div>
+              <div className="font-medium text-sm">Redo</div>
+              <div className="text-xs text-gray-600">Ctrl/Cmd + Shift + Z</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Copy className="w-5 h-5 text-cyan-600" />
+            <div>
+              <div className="font-medium text-sm">Copy</div>
+              <div className="text-xs text-gray-600">Ctrl/Cmd + C</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Scissors className="w-5 h-5 text-yellow-600" />
+            <div>
+              <div className="font-medium text-sm">Cut</div>
+              <div className="text-xs text-gray-600">Ctrl/Cmd + X</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Copy className="w-5 h-5 text-indigo-600" />
+            <div>
+              <div className="font-medium text-sm">Paste</div>
+              <div className="text-xs text-gray-600">Ctrl/Cmd + V</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Trash2 className="w-5 h-5 text-red-600" />
+            <div>
+              <div className="font-medium text-sm">Delete</div>
+              <div className="text-xs text-gray-600">Delete/Backspace</div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Advanced Shortcuts</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-xs font-bold">A</div>
+            <div>
+              <div className="font-medium text-sm">Select All</div>
+              <div className="text-xs text-gray-600">Ctrl/Cmd + A - Select all components</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-xs font-bold">Esc</div>
+            <div>
+              <div className="font-medium text-sm">Clear Selection</div>
+              <div className="text-xs text-gray-600">Escape - Deselect all components</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-xs font-bold">Y</div>
+            <div>
+              <div className="font-medium text-sm">Alternative Redo</div>
+              <div className="text-xs text-gray-600">Ctrl/Cmd + Y - Alternative redo shortcut</div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Multi-Selection Workflow</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-medium mb-2 text-blue-800">Step 1: Select Multiple Components</h4>
+            <ul className="text-blue-700 text-sm space-y-1">
+              <li>· Hold Shift and drag on empty canvas for selection box</li>
+              <li>· Hold Shift and click components to toggle selection</li>
+              <li>· Use Ctrl/Cmd + A to select everything</li>
+            </ul>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h4 className="font-medium mb-2 text-green-800">Step 2: Group Operations</h4>
+            <ul className="text-green-700 text-sm space-y-1">
+              <li>· Drag any selected component to move the entire group</li>
+              <li>· Use Ctrl/Cmd + C to copy selected components</li>
+              <li>· Use Ctrl/Cmd + V to paste with 50px offset</li>
+              <li>· Use Delete key to remove all selected components</li>
+            </ul>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h4 className="font-medium mb-2 text-purple-800">Step 3: Undo/Redo</h4>
+            <ul className="text-purple-700 text-sm space-y-1">
+              <li>· Ctrl/Cmd + Z to undo last action</li>
+              <li>· Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo</li>
+              <li>· System stores up to 50 history states</li>
+              <li>· Works with all operations: add, delete, connect, paste</li>
+            </ul>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Visual Indicators</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          <div className="flex items-center gap-4 p-3 border rounded-lg">
+            <div className="w-4 h-4 border-2 border-blue-500 rounded-full animate-pulse"></div>
+            <div>
+              <div className="font-medium text-sm">Selected Component</div>
+              <div className="text-xs text-gray-600">Blue ring with animated border</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-3 border rounded-lg">
+            <Badge variant="outline" className="text-xs">3 selected</Badge>
+            <div>
+              <div className="font-medium text-sm">Selection Counter</div>
+              <div className="text-xs text-gray-600">Top bar shows selected count</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-3 border rounded-lg">
+            <div className="w-8 h-8 border-2 border-blue-500 bg-blue-500/10"></div>
+            <div>
+              <div className="font-medium text-sm">Selection Box</div>
+              <div className="text-xs text-gray-600">Blue box during Shift+drag</div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
