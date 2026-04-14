@@ -1,0 +1,37 @@
+'use client';
+
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+interface SelectionBoxProps {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  isActive: boolean;
+}
+
+export default function SelectionBox({ startX, startY, endX, endY, isActive }: SelectionBoxProps) {
+  console.log('SelectionBox render', { startX, startY, endX, endY, isActive });
+  
+  if (!isActive) return null;
+
+  const left = Math.min(startX, endX);
+  const top = Math.min(startY, endY);
+  const width = Math.abs(endX - startX);
+  const height = Math.abs(endY - startY);
+
+  console.log('SelectionBox dimensions', { left, top, width, height });
+
+  return (
+    <div
+      className="absolute pointer-events-none border-2 border-blue-500 bg-blue-500/10 z-[1000]"
+      style={{
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+      }}
+    />
+  );
+}

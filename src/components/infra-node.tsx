@@ -38,18 +38,23 @@ function InfraNode({ data, selected }: NodeProps) {
   const isBottleneck = metrics?.isBottleneck;
   const utilization = metrics?.utilizationPercent ?? 0;
   const isHighlighted = !!(nodeData as Record<string, unknown>).highlighted;
+  const isMultiSelected = !!(nodeData as Record<string, unknown>).isMultiSelected;
 
   return (
     <div
       className={cn(
-        'relative rounded-xl border-2 bg-white shadow-lg transition-all min-w-[160px]',
-        selected && 'ring-2 ring-blue-400 ring-offset-2',
+        'relative rounded-xl bg-white shadow-lg transition-all min-w-[160px]',
         isBottleneck && 'animate-pulse border-red-400',
-        isHighlighted && 'ring-4 ring-yellow-400/70 ring-offset-1 scale-105 z-50'
+        isHighlighted && 'ring-4 ring-yellow-400/70 ring-offset-1 scale-105 z-50',
+        isMultiSelected && 'ring-2 ring-blue-500 ring-offset-1'
       )}
       style={{
-        borderColor: isBottleneck ? '#ef4444' : color,
-        boxShadow: isHighlighted ? `0 0 20px ${color}55` : undefined,
+        border: selected || isMultiSelected ? '2px solid transparent' : `2px solid ${isBottleneck ? '#ef4444' : color}`,
+        boxShadow: selected || isMultiSelected ? 
+          'inset 0 0 0 2px #94a3b8, inset 0 0 0 2px transparent, inset 0 0 0 2px transparent, inset 0 0 0 2px transparent' : 
+          isHighlighted ? `0 0 20px ${color}55` : undefined,
+        background: 'white',
+        animation: selected || isMultiSelected ? 'dashMove 0.5s linear infinite' : undefined,
       }}
     >
       <Handle type="target" position={Position.Top} id="top-target" className="!w-3 !h-3 !bg-gray-400" />

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ReactFlow,
   Controls,
@@ -23,6 +24,7 @@ import { SimulationNodeData, SimulationParams, SimulationResult, ComponentType, 
 import { COMPONENT_DEFAULTS, COMPONENT_LABELS, COMPONENT_COLORS } from '@/lib/services-catalog';
 import { prepareSimulation, simulateTick, finalizeSimulation, SimulationContext } from '@/lib/simulation-engine';
 import { PRESETS } from '@/lib/presets';
+import { SimpleUndoRedo } from './simple-undo-redo';
 
 import InfraNode from './infra-node';
 import ComponentPalette from './component-palette';
@@ -30,6 +32,7 @@ import ConfigPanel from './config-panel';
 import SimulationControls from './simulation-controls';
 import ReportPanel from './report-panel';
 import LiveClientPanel from './live-client-panel';
+import SelectionBox from './selection-box';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -49,6 +52,7 @@ import {
   Boxes,
   Network,
   Zap,
+  BookOpen,
 } from 'lucide-react';
 
 const nodeTypes: NodeTypes = {
@@ -123,6 +127,12 @@ export default function Simulator() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<SimulationNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNode, setSelectedNode] = useState<Node<SimulationNodeData> | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionBox, setSelectionBox] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
+  const [clipboard, setClipboard] = useState<{ nodes: Node<SimulationNodeData>[]; edges: Edge[] } | null>(null);
+  const undoRedoRef = useRef<SimpleUndoRedo>(new SimpleUndoRedo());
   const [simulationParams, setSimulationParams] = useState<SimulationParams>(DEFAULT_PARAMS);
   const [hydrated, setHydrated] = useState(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
@@ -135,7 +145,7 @@ export default function Simulator() {
   const [rightTab, setRightTab] = useState('components');
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const reactFlowRef = useRef<ReactFlowInstance<Node<SimulationNodeData>, Edge> | null>(null);
-
+  
   // Restore from localStorage after first client-side mount (avoids SSR mismatch)
   useEffect(() => {
     const saved = loadFromStorage();
@@ -148,39 +158,70 @@ export default function Simulator() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist state to localStorage on every change (only after hydration to avoid overwriting with empty state)
-  useEffect(() => {
-    if (!hydrated) return;
-    saveToStorage(nodes, edges, simulationParams);
-  }, [nodes, edges, simulationParams, hydrated]);
+  
+  // Save current state to history - using simple undo/redo system
+  const saveToHistory = useCallback(() => {
+    undoRedoRef.current.saveState(nodes, edges);
+  }, [nodes, edges]);
 
   const onConnect = useCallback(
     (params: Connection) => {
+      // Add connection first, then save state
       setEdges((eds) =>
         addEdge(
           {
             ...params,
-            animated: true,
             style: { stroke: '#94a3b8', strokeWidth: 2 },
           },
           eds
         )
       );
+      
+      setTimeout(() => {
+        saveToHistory();
+      }, 50);
     },
-    [setEdges]
+    [setEdges, saveToHistory]
   );
 
   const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      setSelectedNode(node as Node<SimulationNodeData>);
-      setRightTab('config');
+    (event: React.MouseEvent, node: Node) => {
+      event.stopPropagation();
+      
+      if (event.shiftKey && selectedNodes.length > 0) {
+        // Multi-select with shift key
+        const nodeId = node.id;
+        setSelectedNodes(prev => {
+          if (prev.includes(nodeId)) {
+            return prev.filter(id => id !== nodeId);
+          } else {
+            return [...prev, nodeId];
+          }
+        });
+        setSelectedNode(null);
+      } else {
+        // Normal single select
+        setSelectedNode(node as Node<SimulationNodeData>);
+        setSelectedNodes([]);
+        setRightTab('config');
+      }
     },
-    []
+    [selectedNodes.length]
   );
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
+    setSelectedEdge(null);
+    setSelectedNodes([]);
   }, []);
+
+  const onEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      setSelectedEdge(edge);
+      setSelectedNode(null);
+    },
+    []
+  );
 
   const addComponent = useCallback(
     (type: ComponentType, position?: { x: number; y: number }) => {
@@ -202,9 +243,14 @@ export default function Simulator() {
           },
         },
       };
+      // Add component first, then save state
       setNodes((nds) => [...nds, newNode]);
+      
+      setTimeout(() => {
+        saveToHistory();
+      }, 50);
     },
-    [nodes.length, setNodes]
+    [nodes.length, setNodes, saveToHistory]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -228,6 +274,105 @@ export default function Simulator() {
     },
     [addComponent]
   );
+
+  const handleSelectionStart = useCallback((event: React.MouseEvent) => {
+    // Only start selection with Shift key + mouse down on empty canvas
+    if (!event.shiftKey) return;
+    
+    const target = event.target as HTMLElement;
+    const isReactFlowPane = target.closest('.react-flow__pane') || 
+                          target.classList.contains('react-flow__pane') ||
+                          target.closest('.react-flow__renderer');
+    
+    // Don't start selection if clicking on nodes, handles, or other UI elements
+    const isNode = target.closest('.react-flow__node') || target.classList.contains('react-flow__node');
+    const isHandle = target.closest('.react-flow__handle') || target.classList.contains('react-flow__handle');
+    const isControl = target.closest('.react-flow__controls') || target.classList.contains('react-flow__controls');
+    const isMiniMap = target.closest('.react-flow__minimap') || target.classList.contains('react-flow__minimap');
+    const isPanel = target.closest('.react-flow__panel') || target.classList.contains('react-flow__panel');
+    
+    if (event.button === 0 && isReactFlowPane && !isNode && !isHandle && !isControl && !isMiniMap && !isPanel) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const rect = event.currentTarget.getBoundingClientRect();
+      const startX = event.clientX - rect.left;
+      const startY = event.clientY - rect.top;
+      
+      setIsSelecting(true);
+      setSelectionBox({
+        startX,
+        startY,
+        endX: startX,
+        endY: startY,
+      });
+      setSelectedNode(null);
+      setSelectedNodes([]);
+    }
+  }, []);
+
+  const handleSelectionMove = useCallback((event: React.MouseEvent) => {
+    if (!isSelecting || !selectionBox) return;
+    
+    event.preventDefault();
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    const endX = event.clientX - rect.left;
+    const endY = event.clientY - rect.top;
+    
+    setSelectionBox(prev => prev ? {
+      ...prev,
+      endX,
+      endY,
+    } : null);
+  }, [isSelecting, selectionBox]);
+
+  const handleSelectionEnd = useCallback((event: React.MouseEvent) => {
+    if (!isSelecting || !selectionBox) {
+      setIsSelecting(false);
+      setSelectionBox(null);
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Calculate selection bounds in screen coordinates
+    const left = Math.min(selectionBox.startX, selectionBox.endX);
+    const top = Math.min(selectionBox.startY, selectionBox.endY);
+    const right = Math.max(selectionBox.startX, selectionBox.endX);
+    const bottom = Math.max(selectionBox.startY, selectionBox.endY);
+
+    // Get the current viewport transform from ReactFlow
+    const viewport = reactFlowRef.current?.getViewport();
+
+    // Find nodes within selection bounds
+    const selectedNodeIds = nodes.filter(node => {
+      // Convert node position to screen coordinates
+      const nodeScreenX = node.position.x * (viewport?.zoom || 1) + (viewport?.x || 0);
+      const nodeScreenY = node.position.y * (viewport?.zoom || 1) + (viewport?.y || 0);
+      const nodeWidth = 160 * (viewport?.zoom || 1);
+      const nodeHeight = 100 * (viewport?.zoom || 1);
+      
+      // Check if node intersects with selection box
+      const nodeLeft = nodeScreenX;
+      const nodeRight = nodeScreenX + nodeWidth;
+      const nodeTop = nodeScreenY;
+      const nodeBottom = nodeScreenY + nodeHeight;
+      
+      const isSelected = nodeRight >= left && 
+                        nodeLeft <= right && 
+                        nodeBottom >= top && 
+                        nodeTop <= bottom;
+      
+      
+      return isSelected;
+    }).map(node => node.id);
+
+    setSelectedNodes(selectedNodeIds);
+    setIsSelecting(false);
+    setSelectionBox(null);
+  }, [isSelecting, selectionBox, nodes]);
 
   const updateNode = useCallback(
     (nodeId: string, updates: Partial<SimulationNodeData>) => {
@@ -265,6 +410,7 @@ export default function Simulator() {
       if (selectedNode?.id === nodeId) {
         setSelectedNode(null);
       }
+      setSelectedNodes(prev => prev.filter(id => id !== nodeId));
     },
     [setNodes, setEdges, selectedNode]
   );
@@ -336,6 +482,9 @@ export default function Simulator() {
       const preset = PRESETS.find((p) => p.id === presetId);
       if (!preset) return;
 
+      // Save state BEFORE loading preset
+      saveToHistory();
+
       setNodes(preset.nodes as Node<SimulationNodeData>[]);
       setEdges(
         preset.edges.map((e) => ({
@@ -346,19 +495,249 @@ export default function Simulator() {
       setSimulationParams(preset.simulationParams);
       setSimulationResult(null);
       setSelectedNode(null);
+      setSelectedNodes([]);
 
       // Fit view after loading
       setTimeout(() => {
         reactFlowRef.current?.fitView({ padding: 0.2 });
       }, 100);
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, saveToHistory]
   );
+
+  // Undo functionality - using simple undo/redo system
+  const undo = useCallback(() => {
+    const prevState = undoRedoRef.current.undo();
+    if (prevState) {
+      // Clear all selections first
+      setSelectedNode(null);
+      setSelectedNodes([]);
+      setSelectedEdge(null);
+      
+      // Restore the state directly
+      setNodes(prevState.nodes);
+      setEdges(prevState.edges);
+    }
+  }, []);
+
+  // Redo functionality - using simple undo/redo system
+  const redo = useCallback(() => {
+    const nextState = undoRedoRef.current.redo();
+    if (nextState) {
+      // Clear all selections first
+      setSelectedNode(null);
+      setSelectedNodes([]);
+      setSelectedEdge(null);
+      
+      // Restore the state directly
+      setNodes(nextState.nodes);
+      setEdges(nextState.edges);
+    }
+  }, []);
+
+  // Copy functionality
+  const copy = useCallback(() => {
+    if (selectedNodes.length === 0) return;
+    
+    const selectedNodeIds = new Set(selectedNodes);
+    const nodesToCopy = nodes.filter(node => selectedNodeIds.has(node.id));
+    const edgesToCopy = edges.filter(edge => 
+      selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target)
+    );
+    
+    setClipboard({ nodes: nodesToCopy, edges: edgesToCopy });
+  }, [selectedNodes, nodes, edges]);
+
+  // Paste functionality
+  const paste = useCallback(() => {
+    if (!clipboard) return;
+    
+    // Create new IDs for copied nodes
+    const idMap = new Map<string, string>();
+    const offsetX = 50;
+    const offsetY = 50;
+    
+    const newNodes = clipboard.nodes.map(node => {
+      const newId = `node_${++nodeIdCounter}_${Date.now()}`;
+      idMap.set(node.id, newId);
+      
+      return {
+        ...node,
+        id: newId,
+        position: {
+          x: node.position.x + offsetX,
+          y: node.position.y + offsetY,
+        },
+      };
+    });
+    
+    const newEdges = clipboard.edges.map(edge => ({
+      ...edge,
+      id: `edge_${Date.now()}_${Math.random()}`,
+      source: idMap.get(edge.source) || edge.source,
+      target: idMap.get(edge.target) || edge.target,
+      style: { stroke: '#94a3b8', strokeWidth: 2 },
+    }));
+    
+    // Save state BEFORE pasting
+    saveToHistory();
+    
+    setNodes(prev => [...prev, ...newNodes]);
+    setEdges(prev => [...prev, ...newEdges]);
+    
+    // Select the newly pasted nodes
+    const pastedNodeIds = newNodes.map(node => node.id);
+    setSelectedNodes(pastedNodeIds);
+    
+  }, [clipboard, saveToHistory]);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Escape to clear selection
+      if (event.key === 'Escape') {
+        setSelectedNode(null);
+        setSelectedNodes([]);
+        setSelectedEdge(null);
+        return;
+      }
+
+      // Delete or Backspace to delete selected nodes
+      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodes.length > 0) {
+        event.preventDefault();
+        
+        // Delete the nodes first
+        selectedNodes.forEach(nodeId => {
+          deleteNode(nodeId);
+        });
+        setSelectedNodes([]);
+        
+        // Save state after deleting to capture the new state
+        setTimeout(() => {
+          saveToHistory();
+        }, 100);
+        return;
+      }
+
+      // Ctrl+A to select all nodes
+      if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        const allNodeIds = nodes.map(n => n.id);
+        setSelectedNodes(allNodeIds);
+        setSelectedNode(null);
+        return;
+      }
+
+      // Ctrl+Z or Cmd+Z to undo
+      if (event.key === 'z' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+        return;
+      }
+
+      // Ctrl+Shift+Z or Cmd+Shift+Z to redo
+      if (event.key === 'z' && (event.ctrlKey || event.metaKey) && event.shiftKey) {
+        event.preventDefault();
+        redo();
+        return;
+      }
+
+      // Ctrl+Y or Cmd+Y to redo (alternative)
+      if (event.key === 'y' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        redo();
+        return;
+      }
+
+      // Ctrl+C or Cmd+C to copy
+      if (event.key === 'c' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        copy();
+        return;
+      }
+
+      // Ctrl+V or Cmd+V to paste
+      if (event.key === 'v' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        paste();
+        return;
+      }
+
+      // Ctrl+X or Cmd+X to cut
+      if (event.key === 'x' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        if (selectedNodes.length > 0) {
+          copy();
+          // Save state before cutting
+          saveToHistory();
+          selectedNodes.forEach(nodeId => {
+            deleteNode(nodeId);
+          });
+          setSelectedNodes([]);
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodes, nodes, deleteNode, saveToHistory, undo, redo, copy, paste]);
+
+  // Initialize history system when hydrated
+  useEffect(() => {
+    if (hydrated) {
+      saveToHistory();
+    }
+  }, [hydrated, saveToHistory]);
+
+  
+  // Handle group movement
+  useEffect(() => {
+    if (selectedNodes.length === 0) return;
+
+    const handleNodeDrag = (event: any) => {
+      // This will be handled by ReactFlow's built-in drag functionality
+      // since we're marking nodes as selected
+    };
+
+    // ReactFlow will handle the group movement automatically when nodes are marked as selected
+  }, [selectedNodes]);
 
   const selectedNodeForPanel = useMemo(() => {
     if (!selectedNode) return null;
     return nodes.find((n) => n.id === selectedNode.id) || null;
   }, [selectedNode, nodes]);
+
+  // Memoize nodes to prevent infinite re-renders
+  const memoizedNodes = useMemo(() => 
+    nodes.map((n) => ({
+      ...n,
+      data: { 
+        ...n.data, 
+        highlighted: n.id === highlightedNodeId,
+        isMultiSelected: selectedNodes.includes(n.id)
+      },
+      className: [
+        n.id === selectedNode?.id ? 'selected-node' : '',
+        selectedNodes.includes(n.id) ? 'multi-selected-node' : ''
+      ].filter(Boolean).join(' '),
+      selected: selectedNodes.includes(n.id) || n.id === selectedNode?.id,
+    })), 
+    [nodes, highlightedNodeId, selectedNodes, selectedNode]
+  );
+
+  // Memoize edges to prevent infinite re-renders
+  const memoizedEdges = useMemo(() => 
+    edges.map((edge) => ({
+      ...edge,
+      animated: edge.id === selectedEdge?.id,
+      style: {
+        stroke: '#94a3b8',
+        strokeWidth: edge.id === selectedEdge?.id ? 3 : 2,
+      },
+    })), 
+    [edges, selectedEdge]
+  );
 
   const leftPanel = useResizable(256, 180, 480, false);
   const rightPanel = useResizable(288, 220, 560, true);
@@ -378,9 +757,20 @@ export default function Simulator() {
           <Badge variant="outline" className="text-[10px]">
             {edges.length} connections
           </Badge>
+          {selectedNodes.length > 0 && (
+            <Badge variant="default" className="text-[10px] bg-blue-500">
+              {selectedNodes.length} selected
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
+          <Link href="/guide">
+            <Button variant="outline" size="sm" className="gap-2">
+              <BookOpen className="w-3 h-3" />
+              Get Started
+            </Button>
+          </Link>
           <Select onValueChange={loadPreset}>
             <SelectTrigger className="h-8 text-xs w-[200px]">
               <SelectValue placeholder="Load a preset..." />
@@ -433,18 +823,22 @@ export default function Simulator() {
         {/* Canvas */}
         <div className="flex-1 relative">
           <ReactFlow
-            nodes={nodes.map((n) => ({
-              ...n,
-              data: { ...n.data, highlighted: n.id === highlightedNodeId },
-            }))}
-            edges={edges}
+            nodes={memoizedNodes}
+            edges={memoizedEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
             onDragOver={onDragOver}
             onDrop={onDrop}
+            selectionKeyCode="Shift"
+            deleteKeyCode={['Delete', 'Backspace']}
+            multiSelectionKeyCode="Shift"
+            onMouseDown={handleSelectionStart}
+            onMouseMove={handleSelectionMove}
+            onMouseUp={handleSelectionEnd}
             onInit={(instance) => { reactFlowRef.current = instance as unknown as ReactFlowInstance<Node<SimulationNodeData>, Edge>; }}
             nodeTypes={nodeTypes}
             fitView
@@ -475,9 +869,19 @@ export default function Simulator() {
                   <p className="text-xs text-gray-400 mt-1">
                     Drag components from the right panel, or load a preset from the top bar
                   </p>
+                  <p className="text-xs text-blue-600 mt-2 font-medium">
+                    💡 Tip: Hold Shift and drag on empty space to select multiple components
+                  </p>
                 </div>
               )}
             </Panel>
+            <SelectionBox
+              startX={selectionBox?.startX || 0}
+              startY={selectionBox?.startY || 0}
+              endX={selectionBox?.endX || 0}
+              endY={selectionBox?.endY || 0}
+              isActive={isSelecting && !!selectionBox}
+            />
           </ReactFlow>
         </div>
 
