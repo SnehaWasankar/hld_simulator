@@ -6,17 +6,17 @@ ArchScope is an interactive web-based tool that lets you design, visualize, and 
 
 ## Features
 
-### Visual Architecture Design : Drag-and-drop interface for building system diagrams with 9 component types
+#### Visual Architecture Design: Drag-and-drop interface for building system diagrams with 9 component types
 <img width="454" height="505" alt="image" src="https://github.com/user-attachments/assets/ad1a401b-ba40-4e36-98d0-f18471515a1d" />
 
-### Real-time Simulation: Performance testing with accurate latency, throughput, and cost modeling
+#### Real-time Simulation: Performance testing with accurate latency, throughput, and cost modeling
 <img width="459" height="555" alt="image" src="https://github.com/user-attachments/assets/5c2de741-61c2-4e41-897f-d0a3ff32b2ba" />
 
-### Comprehensive Analytics**: Bottleneck detection, cost analysis, and time-series visualization
+#### Comprehensive Analytics: Bottleneck detection, cost analysis, and time-series visualization
 <img width="457" height="551" alt="image" src="https://github.com/user-attachments/assets/8000c1e4-f5b4-4d4b-bac3-ece82efe3804" />
 
-### Advanced Configuration**: Rate limiting algorithms, cache settings, and custom cost overrides
-### Real-world Services**: 30+ AWS, GCP, Azure, and generic service options with realistic pricing
+#### Advanced Configuration: Rate limiting algorithms, cache settings, and custom cost overrides
+#### Real-world Services: 30+ AWS, GCP, Azure, and generic service options with realistic pricing
 
 ## Quick Start
 
