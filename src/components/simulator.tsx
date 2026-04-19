@@ -25,6 +25,10 @@ import { COMPONENT_DEFAULTS, COMPONENT_LABELS, COMPONENT_COLORS } from '@/lib/se
 import { prepareSimulation, simulateTick, finalizeSimulation, SimulationContext } from '@/lib/simulation-engine';
 import { PRESETS } from '@/lib/presets';
 import { SimpleUndoRedo } from './simple-undo-redo';
+import { DEFAULT_PARAMS } from './simulator/constants';
+import { loadFromStorage } from './simulator/storage';
+import { useResizable } from './simulator/use-resizable';
+import { useKeyboardShortcuts } from './simulator/use-keyboard-shortcuts';
 
 import InfraNode from './infra-node';
 import ComponentPalette from './component-palette';
@@ -60,68 +64,6 @@ const nodeTypes: NodeTypes = {
 };
 
 let nodeIdCounter = 0;
-
-function useResizable(initial: number, min: number, max: number, inverted = false) {
-  const sizeRef = useRef(initial);
-  const [size, setSize] = useState(initial);
-  const startX = useRef(0);
-  const startSize = useRef(initial);
-
-  useEffect(() => { sizeRef.current = size; }, [size]);
-
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    startX.current = e.clientX;
-    startSize.current = sizeRef.current;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const onMouseMove = (ev: MouseEvent) => {
-      const delta = (ev.clientX - startX.current) * (inverted ? -1 : 1);
-      const next = Math.min(max, Math.max(min, startSize.current + delta));
-      sizeRef.current = next;
-      setSize(next);
-    };
-    const onMouseUp = () => {
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  }, [min, max, inverted]);
-
-  return { size, onMouseDown };
-}
-
-const STORAGE_KEY = 'archscope-state';
-
-function loadFromStorage(): { nodes: Node<SimulationNodeData>[]; edges: Edge[]; params: SimulationParams } | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveToStorage(nodes: Node<SimulationNodeData>[], edges: Edge[], params: SimulationParams) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges, params }));
-  } catch { /* quota exceeded — ignore */ }
-}
-
-const DEFAULT_PARAMS: SimulationParams = {
-  concurrentUsers: 100,
-  requestsPerSecPerUser: 1,
-  payloadSizeMB: 0.1,
-  simulationDurationSeconds: 60,
-  loadProfile: 'constant',
-  spikeFrequency: 3,
-  spikeIntensity: 3,
-};
 
 export default function Simulator() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<SimulationNodeData>>([]);
@@ -591,97 +533,19 @@ export default function Simulator() {
     
   }, [clipboard, saveToHistory]);
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Escape to clear selection
-      if (event.key === 'Escape') {
-        setSelectedNode(null);
-        setSelectedNodes([]);
-        setSelectedEdge(null);
-        return;
-      }
-
-      // Delete or Backspace to delete selected nodes
-      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodes.length > 0) {
-        event.preventDefault();
-        
-        // Delete the nodes first
-        selectedNodes.forEach(nodeId => {
-          deleteNode(nodeId);
-        });
-        setSelectedNodes([]);
-        
-        // Save state after deleting to capture the new state
-        setTimeout(() => {
-          saveToHistory();
-        }, 100);
-        return;
-      }
-
-      // Ctrl+A to select all nodes
-      if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        const allNodeIds = nodes.map(n => n.id);
-        setSelectedNodes(allNodeIds);
-        setSelectedNode(null);
-        return;
-      }
-
-      // Ctrl+Z or Cmd+Z to undo
-      if (event.key === 'z' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
-        event.preventDefault();
-        undo();
-        return;
-      }
-
-      // Ctrl+Shift+Z or Cmd+Shift+Z to redo
-      if (event.key === 'z' && (event.ctrlKey || event.metaKey) && event.shiftKey) {
-        event.preventDefault();
-        redo();
-        return;
-      }
-
-      // Ctrl+Y or Cmd+Y to redo (alternative)
-      if (event.key === 'y' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        redo();
-        return;
-      }
-
-      // Ctrl+C or Cmd+C to copy
-      if (event.key === 'c' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        copy();
-        return;
-      }
-
-      // Ctrl+V or Cmd+V to paste
-      if (event.key === 'v' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        paste();
-        return;
-      }
-
-      // Ctrl+X or Cmd+X to cut
-      if (event.key === 'x' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        if (selectedNodes.length > 0) {
-          copy();
-          // Save state before cutting
-          saveToHistory();
-          selectedNodes.forEach(nodeId => {
-            deleteNode(nodeId);
-          });
-          setSelectedNodes([]);
-        }
-        return;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodes, nodes, deleteNode, saveToHistory, undo, redo, copy, paste]);
+  useKeyboardShortcuts({
+    selectedNodes,
+    nodes,
+    clearSelectedNode: () => setSelectedNode(null),
+    setSelectedNodes,
+    clearSelectedEdge: () => setSelectedEdge(null),
+    deleteNode,
+    saveToHistory,
+    undo,
+    redo,
+    copy,
+    paste,
+  });
 
   // Initialize history system when hydrated
   useEffect(() => {
@@ -689,19 +553,6 @@ export default function Simulator() {
       saveToHistory();
     }
   }, [hydrated, saveToHistory]);
-
-  
-  // Handle group movement
-  useEffect(() => {
-    if (selectedNodes.length === 0) return;
-
-    const handleNodeDrag = (event: any) => {
-      // This will be handled by ReactFlow's built-in drag functionality
-      // since we're marking nodes as selected
-    };
-
-    // ReactFlow will handle the group movement automatically when nodes are marked as selected
-  }, [selectedNodes]);
 
   const selectedNodeForPanel = useMemo(() => {
     if (!selectedNode) return null;

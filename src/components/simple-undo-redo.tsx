@@ -1,7 +1,10 @@
+import type { Edge, Node } from "@xyflow/react";
+import type { SimulationNodeData } from "@/lib/types";
+
 // Simple undo/redo system that works independently of ReactFlow
 export interface HistoryState {
-  nodes: any[];
-  edges: any[];
+  nodes: Node<SimulationNodeData>[];
+  edges: Edge[];
 }
 
 export class SimpleUndoRedo {
@@ -9,7 +12,7 @@ export class SimpleUndoRedo {
   private currentIndex: number = -1;
   private maxHistory: number = 50;
 
-  saveState(nodes: any[], edges: any[]) {
+  saveState(nodes: Node<SimulationNodeData>[], edges: Edge[]) {
     // Create deep copies
     const currentState: HistoryState = {
       nodes: JSON.parse(JSON.stringify(nodes)),
