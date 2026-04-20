@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import MobileDetect from '@/components/mobile-detect';
 import {
   ArrowLeft,
   BookOpen,
@@ -365,7 +364,6 @@ const GetStartedPage = () => {
   const currentIndex = sections.findIndex(s => s.id === activeSection);
 
   return (
-    <MobileDetect>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-50">
@@ -488,7 +486,6 @@ const GetStartedPage = () => {
           </div>
         </div>
       </div>
-    </MobileDetect>
   );
 };
 
