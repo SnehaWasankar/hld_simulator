@@ -142,6 +142,8 @@ export interface DesignPreset {
     id: string;
     source: string;
     target: string;
+    sourceHandle?: string;
+    targetHandle?: string;
     animated?: boolean;
   }>;
   simulationParams: SimulationParams;

@@ -7,18 +7,18 @@ export const PRESETS: DesignPreset[] = [
     description: 'Shorten long URLs and redirect via short codes',
     simulationParams: {
       concurrentUsers: 1000,
-      requestsPerSecPerUser: 0.08,
+      requestsPerSecPerUser: 1,
       payloadSizeMB: 0.001,
-      simulationDurationSeconds: 120,
-      loadProfile: 'constant' as const,
-      spikeFrequency: 3,
-      spikeIntensity: 3,
+      simulationDurationSeconds: 10,
+      loadProfile: 'repeating_spike' as const,
+      spikeFrequency: 2,
+      spikeIntensity: 2,
     },
     nodes: [
       {
         id: 'client',
         type: 'infra',
-        position: { x: 400, y: 0 },
+        position: { x: 400, y: 450 },
         data: {
           label: 'Client',
           componentType: 'client',
@@ -28,7 +28,7 @@ export const PRESETS: DesignPreset[] = [
       {
         id: 'lb',
         type: 'infra',
-        position: { x: 400, y: 150 },
+        position: { x: 400, y: 600 },
         data: {
           label: 'Load Balancer',
           componentType: 'load_balancer',
@@ -38,7 +38,7 @@ export const PRESETS: DesignPreset[] = [
       {
         id: 'api1',
         type: 'infra',
-        position: { x: 250, y: 300 },
+        position: { x: 225, y: 750 },
         data: {
           label: 'API Server 1',
           componentType: 'api_server',
@@ -48,7 +48,7 @@ export const PRESETS: DesignPreset[] = [
       {
         id: 'api2',
         type: 'infra',
-        position: { x: 400, y: 300 },
+        position: { x: 400, y: 750 },
         data: {
           label: 'API Server 2',
           componentType: 'api_server',
@@ -58,7 +58,7 @@ export const PRESETS: DesignPreset[] = [
       {
         id: 'api3',
         type: 'infra',
-        position: { x: 550, y: 300 },
+        position: { x: 575, y: 750 },
         data: {
           label: 'API Server 3',
           componentType: 'api_server',
@@ -68,7 +68,7 @@ export const PRESETS: DesignPreset[] = [
       {
         id: 'cache1',
         type: 'infra',
-        position: { x: 300, y: 450 },
+        position: { x: 300, y: 900 },
         data: {
           label: 'URL Cache 1',
           componentType: 'cache',
@@ -78,7 +78,7 @@ export const PRESETS: DesignPreset[] = [
       {
         id: 'cache2',
         type: 'infra',
-        position: { x: 500, y: 450 },
+        position: { x: 500, y: 900 },
         data: {
           label: 'URL Cache 2',
           componentType: 'cache',
@@ -88,7 +88,7 @@ export const PRESETS: DesignPreset[] = [
       {
         id: 'db',
         type: 'infra',
-        position: { x: 400, y: 600 },
+        position: { x: 400, y: 1050 },
         data: {
           label: 'URL Database',
           componentType: 'database',
@@ -97,15 +97,15 @@ export const PRESETS: DesignPreset[] = [
       },
     ],
     edges: [
-      { id: 'e-client-lb', source: 'client', target: 'lb' },
-      { id: 'e-lb-api1', source: 'lb', target: 'api1', animated: true },
-      { id: 'e-lb-api2', source: 'lb', target: 'api2', animated: true },
-      { id: 'e-lb-api3', source: 'lb', target: 'api3', animated: true },
-      { id: 'e-api1-cache1', source: 'api1', target: 'cache1' },
-      { id: 'e-api2-cache1', source: 'api2', target: 'cache1' },
-      { id: 'e-api3-cache2', source: 'api3', target: 'cache2' },
-      { id: 'e-cache1-db', source: 'cache1', target: 'db' },
-      { id: 'e-cache2-db', source: 'cache2', target: 'db' },
+      { id: 'e-client-lb', source: 'client', target: 'lb', sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-lb-api1', source: 'lb', target: 'api1', animated: true,  sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-lb-api2', source: 'lb', target: 'api2', animated: true, sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-lb-api3', source: 'lb', target: 'api3', animated: true, sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-api1-cache1', source: 'api1', target: 'cache1', sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-api2-cache1', source: 'api2', target: 'cache1', sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-api3-cache2', source: 'api3', target: 'cache2', sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-cache1-db', source: 'cache1', target: 'db', sourceHandle: 'bottom-source', targetHandle: 'top-target' },
+      { id: 'e-cache2-db', source: 'cache2', target: 'db', sourceHandle: 'bottom-source', targetHandle: 'top-target' },
     ],
   }
 ];
