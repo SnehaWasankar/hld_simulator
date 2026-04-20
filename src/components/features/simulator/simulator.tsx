@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { User } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -749,7 +750,15 @@ export default function Simulator() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Network className="w-5 h-5 text-gray-900" />
-            <h1 className="font-bold text-gray-800">ArchScope</h1>
+            {/* make clickable logo - homepage */}
+            <div className="group cursor-pointer px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors">
+              <h1 className="text-xl font-bold tracking-tight bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-1">
+                ArchScope
+                <span className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-gray-500">
+                </span>
+              </h1>
+            </div>
+            {/* <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">ArchScope</h1> */}
           </div>
           <Badge variant="outline" className="text-[10px]">
             {nodes.length} components
@@ -765,12 +774,7 @@ export default function Simulator() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/guide">
-            <Button variant="outline" size="sm" className="gap-2">
-              <BookOpen className="w-3 h-3" />
-              Get Started
-            </Button>
-          </Link>
+          {/* Presets */}
           <Select onValueChange={loadPreset}>
             <SelectTrigger className="h-8 text-xs w-[200px]">
               <SelectValue placeholder="Load a preset..." />
@@ -786,6 +790,19 @@ export default function Simulator() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Get Started */}
+          <Link href="/guide">
+            <Button variant="outline" size="sm" className="gap-2">
+              <BookOpen className="w-3 h-3" />
+              Get Started
+            </Button>
+          </Link>
+
+          {/* Profile Icon */}
+          <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300">
+            <User className="w-4 h-4 text-gray-700" />
+          </button>
         </div>
       </div>
 
@@ -920,8 +937,11 @@ export default function Simulator() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="components" className="flex-1 overflow-hidden m-0 p-3">
-              <ComponentPalette onAddComponent={addComponent} />
+            <TabsContent value="components"
+              className="flex-1 min-h-0 m-0 bg-gray-50">
+              <div className="h-full overflow-y-auto">
+                <ComponentPalette onAddComponent={addComponent} />
+              </div>
             </TabsContent>
 
             <TabsContent value="live" className="flex-1 overflow-hidden m-0 min-h-0">
