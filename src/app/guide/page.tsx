@@ -28,6 +28,8 @@ import {
   Zap,
   CheckCircle,
   ArrowRight,
+  Menu,
+  X,
 } from 'lucide-react';
 
 interface GuideSection {
@@ -41,6 +43,7 @@ interface GuideSection {
 
 const GetStartedPage = () => {
   const [activeSection, setActiveSection] = useState('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const sections: GuideSection[] = [
     {
@@ -101,7 +104,7 @@ const GetStartedPage = () => {
     <MobileDetect>
       <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
@@ -115,7 +118,9 @@ const GetStartedPage = () => {
                 <h1 className="text-xl font-bold text-gray-900">ArchScope Guide</h1>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
                 {currentIndex + 1} of {sections.length}
               </Badge>
@@ -126,15 +131,61 @@ const GetStartedPage = () => {
                 </Button>
               </Link>
             </div>
+            
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
+            </div>
           </div>
         </div>
+        
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t bg-white">
+            <div className="px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between mb-3">
+                <Badge variant="outline" className="text-xs">
+                  {currentIndex + 1} of {sections.length}
+                </Badge>
+                <Link href="/">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Home className="w-4 h-4" />
+                    Open App
+                  </Button>
+                </Link>
+              </div>
+              <div className="space-y-1">
+                {sections.map((section) => (
+                  <Button
+                    key={section.id}
+                    variant={activeSection === section.id ? "secondary" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveSection(section.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    {section.icon}
+                    <span className="ml-2">{section.title}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        <div className="flex gap-8 h-[calc(100vh-8rem)]">
-          {/* Sidebar Navigation */}
-          <div className="w-64 flex-shrink-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
+          {/* Sidebar Navigation - Desktop Only */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Guide Sections</CardTitle>
@@ -149,18 +200,11 @@ const GetStartedPage = () => {
                       <Button
                         key={section.id}
                         variant={activeSection === section.id ? "secondary" : "ghost"}
-                        size="sm"
-                        className="w-full justify-start h-auto p-3 text-left"
+                        className="w-full justify-start"
                         onClick={() => setActiveSection(section.id)}
                       >
-                        <div className="flex items-center gap-3 w-full">
-                          {section.icon}
-                          <div className="flex-1">
-                            <div className="font-medium text-sm">{section.title}</div>
-                            <div className="text-xs text-gray-500 mt-1">{section.description}</div>
-                          </div>
-                          {section.completed && <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />}
-                        </div>
+                        {section.icon}
+                        <span className="ml-2">{section.title}</span>
                       </Button>
                     ))}
                   </div>
@@ -213,7 +257,8 @@ const GetStartedPage = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </MobileDetect>
   );
 };
 
@@ -927,9 +972,6 @@ const ShortcutsContent = () => (
       </CardContent>
     </Card>
   </div>
-      </div>
-    </MobileDetect>
-  );
-};
+);
 
 export default GetStartedPage;
