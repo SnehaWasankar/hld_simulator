@@ -19,8 +19,8 @@ export default function MobileDetect({ children }: { children: React.ReactNode }
 
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto">
           <div className="mb-6">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,13 +60,7 @@ export default function MobileDetect({ children }: { children: React.ReactNode }
             <p className="text-sm text-gray-500 mb-4">
               For the best experience, please open ArchScope on a desktop or laptop computer.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a 
-                href="https://archscope-app.vercel.app" 
-                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                Open on Desktop
-              </a>
+            <div className="flex justify-center">
               <a 
                 href="/guide" 
                 className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
