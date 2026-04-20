@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SCENARIOS, pickRandom } from '@/lib/scenarios';
-import type { RequestHop } from '@/lib/scenarios';
+import { SCENARIOS, pickRandom } from '@/data';
+import type { RequestHop } from '@/data';
 
 interface SimulateRequestBody {
   scenarioId: string;

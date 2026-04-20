@@ -13,8 +13,8 @@ import {
   MailCheck,
   ShieldAlert,
 } from 'lucide-react';
-import { SimulationNodeData, ComponentType } from '@/lib/types';
-import { COMPONENT_COLORS } from '@/lib/services-catalog';
+import { SimulationNodeData, ComponentType } from '@/types';
+import { COMPONENT_COLORS } from '@/lib/services';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<ComponentType, React.ElementType> = {

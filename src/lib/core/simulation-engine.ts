@@ -8,9 +8,9 @@ import {
   LatencyBreakdownItem,
   TimeSeriesDataPoint,
   LoadProfile,
-} from './types';
+} from '@/types';
 import { getLoadMultiplier } from './load-profile';
-import { getServiceById } from './services-catalog';
+import { getServiceById } from '../services';
 
 interface GraphNode {
   id: string;

@@ -20,19 +20,19 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { SimulationNodeData, SimulationParams, SimulationResult, ComponentType, TimeSeriesDataPoint } from '@/lib/types';
-import { COMPONENT_DEFAULTS, COMPONENT_LABELS, COMPONENT_COLORS } from '@/lib/services-catalog';
-import { prepareSimulation, simulateTick, finalizeSimulation, SimulationContext } from '@/lib/simulation-engine';
-import { PRESETS } from '@/lib/presets';
-import { SimpleUndoRedo } from './simple-undo-redo';
+import { SimulationNodeData, SimulationParams, SimulationResult, ComponentType, TimeSeriesDataPoint } from '@/types';
+import { COMPONENT_DEFAULTS, COMPONENT_LABELS, COMPONENT_COLORS } from '@/lib/services';
+import { prepareSimulation, simulateTick, finalizeSimulation, SimulationContext } from '@/lib/core';
+import { PRESETS } from '@/data';
+import { SimpleUndoRedo } from '@/components/common/simple-undo-redo';
 
-import InfraNode from './infra-node';
-import ComponentPalette from './component-palette';
-import ConfigPanel from './config-panel';
-import SimulationControls from './simulation-controls';
-import ReportPanel from './report-panel';
-import LiveClientPanel from './live-client-panel';
-import SelectionBox from './selection-box';
+import InfraNode from '@/components/features/architecture/infra-node';
+import ComponentPalette from '@/components/features/architecture/component-palette';
+import ConfigPanel from '@/components/features/simulator/config-panel';
+import SimulationControls from '@/components/features/simulator/simulation-controls';
+import ReportPanel from '@/components/features/analytics/report-panel';
+import LiveClientPanel from '@/components/features/analytics/live-client-panel';
+import SelectionBox from '@/components/features/architecture/selection-box';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -487,7 +487,7 @@ export default function Simulator() {
 
       setNodes(preset.nodes as Node<SimulationNodeData>[]);
       setEdges(
-        preset.edges.map((e) => ({
+        preset.edges.map((e: Edge) => ({
           ...e,
           style: { stroke: '#94a3b8', strokeWidth: 2 },
         }))

@@ -1,4 +1,4 @@
-import { DesignPreset } from './types';
+import { DesignPreset } from '@/types';
 
 export const PRESETS: DesignPreset[] = [
   {

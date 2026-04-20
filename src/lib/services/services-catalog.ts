@@ -1,4 +1,4 @@
-import { AwsServiceOption, ComponentType } from './types';
+import { AwsServiceOption, ComponentType } from '@/types';
 
 // Helper function to add pricing metadata to services
 function withPricing(service: Omit<AwsServiceOption, 'pricingLastUpdated' | 'pricingDisclaimer'>): AwsServiceOption {

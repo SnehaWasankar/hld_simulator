@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { SimulationResult, TimeSeriesDataPoint } from '@/lib/types';
-import { COMPONENT_COLORS } from '@/lib/services-catalog';
+import { SimulationResult, TimeSeriesDataPoint } from '@/types';
+import { COMPONENT_COLORS } from '@/lib/services';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';

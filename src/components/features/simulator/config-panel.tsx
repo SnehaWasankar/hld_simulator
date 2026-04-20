@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { Node } from '@xyflow/react';
-import { SimulationNodeData, ComponentType, RateLimitAlgorithm } from '@/lib/types';
+import { SimulationNodeData, ComponentType, RateLimitAlgorithm } from '@/types';
 import {
   getServicesForType,
   getServiceById,
   COMPONENT_LABELS,
-} from '@/lib/services-catalog';
+} from '@/lib/services';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {

@@ -70,36 +70,58 @@ src/
 |   |-- layout.tsx          # Root layout with metadata
 |   |-- page.tsx            # Home page
 |   |-- globals.css         # Global styles
+|   |-- api/                # API routes
+|   |-- guide/              # Documentation pages
 |-- components/            # React components
 |   |-- ui/                 # Reusable UI components (shadcn/ui)
-|   |-- simulator.tsx      # Main simulator component
-|   |-- infra-node.tsx      # Infrastructure node component
-|   |-- component-palette.tsx # Component selection panel
-|   |-- config-panel.tsx    # Component configuration panel
-|   |-- simulation-controls.tsx # Simulation parameters
-|   |-- report-panel.tsx    # Results and analytics
-|   |-- live-client-panel.tsx # Real-time monitoring
+|   |-- features/           # Feature-specific components
+|   |   |-- simulator/      # Simulator-related components
+|   |   |   |-- simulator.tsx      # Main simulator component
+|   |   |   |-- config-panel.tsx    # Component configuration panel
+|   |   |   |-- simulation-controls.tsx # Simulation parameters
+|   |   |-- architecture/   # Architecture design components
+|   |   |   |-- infra-node.tsx      # Infrastructure node component
+|   |   |   |-- component-palette.tsx # Component selection panel
+|   |   |   |-- selection-box.tsx   # Multi-selection tool
+|   |   |-- analytics/      # Analytics and reporting components
+|   |   |   |-- report-panel.tsx    # Results and analytics
+|   |   |   |-- live-client-panel.tsx # Real-time monitoring
+|   |-- common/             # Shared components
+|       |-- mobile-detect.tsx       # Mobile device detection
+|       |-- simple-undo-redo.tsx    # Undo/redo functionality
 |-- lib/                    # Core logic and utilities
-|   |-- types.ts            # TypeScript type definitions
-|   |-- services-catalog.ts # Service definitions and pricing
-|   |-- simulation-engine.ts # Core simulation logic
-|   |-- load-profile.ts     # Traffic pattern generation
+|   |-- core/               # Core business logic
+|   |   |-- simulation-engine.ts # Core simulation logic
+|   |   |-- load-profile.ts     # Traffic pattern generation
+|   |-- services/           # External services and APIs
+|   |   |-- services-catalog.ts # Service definitions and pricing
+|   |-- utils/              # Utility functions
+|   |   |-- index.ts         # Common utilities (cn function)
+|   |-- hooks/              # Custom React hooks
+|-- types/                  # TypeScript type definitions
+|   |-- types.ts            # All type definitions
+|   |-- index.ts            # Type exports
+|-- data/                   # Static data and presets
 |   |-- presets.ts          # Pre-built architecture examples
+|   |-- scenarios.ts        # Live request scenarios
+|   |-- index.ts            # Data exports
+|-- constants/              # Configuration constants
+|   |-- index.ts            # App, simulation, and UI constants
 ```
 
 ## Key Components
 
-### Core Simulation Engine (`src/lib/simulation-engine.ts`)
+### Core Simulation Engine (`src/lib/core/simulation-engine.ts`)
 - Handles request flow through the architecture
 - Calculates latency, throughput, and costs
 - Detects bottlenecks and generates metrics
 
-### Service Catalog (`src/lib/services-catalog.ts`)
+### Service Catalog (`src/lib/services/services-catalog.ts`)
 - Defines available cloud services and their properties
 - Contains pricing data and performance characteristics
 - Easy to extend with new services or providers
 
-### Main Simulator (`src/components/simulator.tsx`)
+### Main Simulator (`src/components/features/simulator/simulator.tsx`)
 - Orchestrates the entire application
 - Manages state and user interactions
 - Integrates all sub-components
@@ -109,24 +131,25 @@ src/
 ### 1. Explore the Codebase
 
 Start by understanding the main components:
-- **Types**: Check `src/lib/types.ts` for data structures
-- **Services**: Browse `src/lib/services-catalog.ts` to see available components
-- **Simulation**: Review `src/lib/simulation-engine.ts` for core logic
+- **Types**: Check `src/types/types.ts` for data structures
+- **Services**: Browse `src/lib/services/services-catalog.ts` to see available components
+- **Simulation**: Review `src/lib/core/simulation-engine.ts` for core logic
+- **Data**: Explore `src/data/` for presets and scenarios
 
 ### 2. Common Contribution Areas
 
 #### Adding New Services
-1. Add service definition to `src/lib/services-catalog.ts`
-2. Update component types in `src/lib/types.ts` if needed
-3. Add UI components if required
+1. Add service definition to `src/lib/services/services-catalog.ts`
+2. Update component types in `src/types/types.ts` if needed
+3. Add UI components in appropriate feature directories
 
 #### Improving Simulation Logic
-- Modify `src/lib/simulation-engine.ts`
+- Modify `src/lib/core/simulation-engine.ts`
 - Add new metrics or calculations
 - Improve performance algorithms
 
 #### UI/UX Enhancements
-- Update components in `src/components/`
+- Update components in `src/components/features/`
 - Add new visualization features
 - Improve user interactions
 

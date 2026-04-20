@@ -1,4 +1,4 @@
-import { LoadProfile } from './types';
+import { LoadProfile } from '@/types';
 
 export function getLoadMultiplier(
   profile: LoadProfile,

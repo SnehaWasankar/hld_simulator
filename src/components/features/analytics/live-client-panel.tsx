@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { Node, Edge } from '@xyflow/react';
-import { SimulationNodeData } from '@/lib/types';
-import { SCENARIOS, Scenario, LiveRequest, RequestHop, HttpMethod } from '@/lib/scenarios';
+import { SimulationNodeData } from '@/types';
+import { SCENARIOS, Scenario, LiveRequest, RequestHop, HttpMethod } from '@/data';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';

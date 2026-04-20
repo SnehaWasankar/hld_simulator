@@ -12,8 +12,8 @@ import {
   MailCheck,
   ShieldAlert,
 } from 'lucide-react';
-import { ComponentType } from '@/lib/types';
-import { COMPONENT_COLORS, COMPONENT_LABELS } from '@/lib/services-catalog';
+import { ComponentType } from '@/types';
+import { COMPONENT_COLORS, COMPONENT_LABELS } from '@/lib/services';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ICONS: Record<ComponentType, React.ElementType> = {

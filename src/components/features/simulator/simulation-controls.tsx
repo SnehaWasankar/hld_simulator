@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { SimulationParams, LoadProfile } from '@/lib/types';
-import { getLoadMultiplier } from '@/lib/load-profile';
+import { SimulationParams, LoadProfile } from '@/types';
+import { getLoadMultiplier } from '@/lib/core';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
