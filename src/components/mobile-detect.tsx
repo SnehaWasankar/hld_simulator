@@ -19,8 +19,8 @@ export default function MobileDetect({ children }: { children: React.ReactNode }
 
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 overflow-y-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto">
+      <div className="h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto mb-8">
           <div className="mb-6">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,8 +33,7 @@ export default function MobileDetect({ children }: { children: React.ReactNode }
             </p>
           </div>
 
-          <div className="space-y-4 text-left">
-            <div className="bg-blue-50 rounded-lg p-4">
+          <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="font-semibold text-blue-900 mb-2">Why Desktop Recommended?</h3>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>· Complex architecture diagrams need larger screens</li>
@@ -43,18 +42,6 @@ export default function MobileDetect({ children }: { children: React.ReactNode }
                 <li>· Advanced keyboard shortcuts need full keyboard</li>
               </ul>
             </div>
-
-            <div className="bg-green-50 rounded-lg p-4">
-              <h3 className="font-semibold text-green-900 mb-2">Current Features</h3>
-              <ul className="text-sm text-green-800 space-y-1">
-                <li>· Multi-selection with Shift+drag</li>
-                <li>· Undo/Redo with keyboard shortcuts</li>
-                <li>· Copy/Paste functionality</li>
-                <li>· Real-time simulation</li>
-                <li>· Interactive flow diagrams</li>
-              </ul>
-            </div>
-          </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-500 mb-4">
