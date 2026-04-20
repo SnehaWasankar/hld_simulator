@@ -51,31 +51,40 @@ export default function ComponentPalette({ onAddComponent }: ComponentPalettePro
   };
 
   return (
-    <div className="w-full">
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">
+    <div className="w-full h-full flex flex-col">
+      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-4 pt-3">
         Components
       </h3>
-      <ScrollArea className="h-[calc(100vh-280px)]">
-        <div className="grid grid-cols-2 gap-2 pr-2">
+      <ScrollArea className="flex-1 px-4 py-4">
+        <div className="grid grid-cols-2 gap-4 pb-2 pt-1">
           {COMPONENT_TYPES.map((type) => {
             const Icon = ICONS[type];
             const color = COMPONENT_COLORS[type];
             return (
               <button
                 key={type}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all cursor-grab active:cursor-grabbing shadow-sm hover:shadow"
+                // className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white
+                // hover:bg-gray-50 hover:border-blue-400
+                // transition-all duration-200 ease-out
+                // cursor-grab active:cursor-grabbing
+                // shadow-sm hover:shadow-md"
+                className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white
+                hover:bg-gray-50 hover:border-blue-400
+                transition-colors duration-200
+                cursor-grab active:cursor-grabbing
+                shadow-sm hover:shadow-md"
                 draggable
                 onDragStart={(e) => onDragStart(e, type)}
                 onClick={() => onAddComponent(type)}
                 title={`Add ${COMPONENT_LABELS[type]}`}
               >
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:scale-110"
                   style={{ backgroundColor: `${color}15` }}
                 >
-                  <Icon className="w-4 h-4" style={{ color }} />
+                  <Icon className="w-4 h-4 transition-colors duration-200" style={{ color }} />
                 </div>
-                <span className="text-[10px] font-medium text-gray-600 text-center leading-tight">
+                <span className="text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-gray-900 transition-colors">
                   {COMPONENT_LABELS[type]}
                 </span>
               </button>
