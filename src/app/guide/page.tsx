@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import MobileDetect from '@/components/mobile-detect';
 import {
   ArrowLeft,
   BookOpen,
@@ -97,7 +98,8 @@ const GetStartedPage = () => {
   const currentIndex = sections.findIndex(s => s.id === activeSection);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <MobileDetect>
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -925,6 +927,9 @@ const ShortcutsContent = () => (
       </CardContent>
     </Card>
   </div>
-);
+      </div>
+    </MobileDetect>
+  );
+};
 
 export default GetStartedPage;
