@@ -749,14 +749,8 @@ export default function Simulator() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Network className="w-5 h-5 text-gray-900" />
-            <h1 className="font-bold text-gray-800">ArchScope</h1>
+            <h1 className="font-custom font-bold text-3xl text-gray-800">ArchScope</h1>
           </div>
-          <Badge variant="outline" className="text-[10px]">
-            {nodes.length} components
-          </Badge>
-          <Badge variant="outline" className="text-[10px]">
-            {edges.length} connections
-          </Badge>
           {selectedNodes.length > 0 && (
             <Badge variant="default" className="text-[10px] bg-blue-500">
               {selectedNodes.length} selected
@@ -793,7 +787,7 @@ export default function Simulator() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
         <div className="border-r bg-white flex flex-col flex-shrink-0" style={{ width: leftPanel.size }}>
-          <div className="p-3 flex-shrink-0">
+          <div className="p-3 overflow-y-auto flex-1">
             <SimulationControls
               params={simulationParams}
               onParamsChange={setSimulationParams}
@@ -859,6 +853,14 @@ export default function Simulator() {
               className="!bg-white !border !shadow-md !rounded-lg"
               maskColor="rgba(0,0,0,0.05)"
             />
+            <Panel position="top-left" className="flex flex-col gap-2">
+              <Badge variant="outline" className="text-[10px]">
+                {nodes.length} components
+              </Badge>
+              <Badge variant="outline" className="text-[10px]">
+                {edges.length} connections
+              </Badge>
+            </Panel>
             <Panel position="top-center">
               {nodes.length === 0 && (
                 <div className="bg-white/90 backdrop-blur-sm border rounded-xl px-6 py-4 shadow-lg text-center">
