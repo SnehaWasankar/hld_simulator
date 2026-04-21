@@ -549,16 +549,27 @@ export default function Simulator() {
 
   // Copy functionality
   const copy = useCallback(() => {
+    // Handle single node select
+    if (selectedNode && selectedNodes.length === 0) {
+      const nodesToCopy = nodes.filter(node => node.id === selectedNode.id);
+      const edgesToCopy = edges.filter(edge =>
+        edge.source === selectedNode.id || edge.target === selectedNode.id
+      );
+      setClipboard({ nodes: nodesToCopy, edges: edgesToCopy });
+      return;
+    }
+
+    // Handle multi-select
     if (selectedNodes.length === 0) return;
-    
+
     const selectedNodeIds = new Set(selectedNodes);
     const nodesToCopy = nodes.filter(node => selectedNodeIds.has(node.id));
-    const edgesToCopy = edges.filter(edge => 
+    const edgesToCopy = edges.filter(edge =>
       selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target)
     );
-    
+
     setClipboard({ nodes: nodesToCopy, edges: edgesToCopy });
-  }, [selectedNodes, nodes, edges]);
+  }, [selectedNodes, selectedNode, nodes, edges]);
 
   // Paste functionality
   const paste = useCallback(() => {
@@ -717,14 +728,30 @@ export default function Simulator() {
       // Ctrl+X or Cmd+X to cut
       if (event.key === 'x' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
+        // Handle single node select
+        if (selectedNode && selectedNodes.length === 0) {
+          copy();
+          // Save state before cutting
+          saveToHistory();
+          setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+          setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+          setSelectedNode(null);
+          setSelectedNodes([]);
+          setSelectedEdge(null);
+          return;
+        }
+
+        // Handle multi-select
         if (selectedNodes.length > 0) {
           copy();
           // Save state before cutting
           saveToHistory();
-          selectedNodes.forEach(nodeId => {
-            deleteNode(nodeId);
-          });
+          setNodes((nds) => nds.filter((n) => !selectedNodes.includes(n.id)));
+          setEdges((eds) => eds.filter((e) => !selectedNodes.includes(e.source) && !selectedNodes.includes(e.target)));
+          setSelectedNode(null);
           setSelectedNodes([]);
+          setSelectedEdge(null);
+          return;
         }
         return;
       }
@@ -732,7 +759,7 @@ export default function Simulator() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodes, nodes, deleteNode, saveToHistory, undo, redo, copy, paste]);
+  }, [selectedNodes, selectedNode, nodes, deleteNode, saveToHistory, undo, redo, copy, paste]);
 
   // Initialize history system when hydrated
   useEffect(() => {
