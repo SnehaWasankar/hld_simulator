@@ -12,7 +12,6 @@ interface SelectionBoxProps {
 }
 
 export default function SelectionBox({ startX, startY, endX, endY, isActive }: SelectionBoxProps) {
-  console.log('SelectionBox render', { startX, startY, endX, endY, isActive });
   
   if (!isActive) return null;
 
@@ -20,8 +19,6 @@ export default function SelectionBox({ startX, startY, endX, endY, isActive }: S
   const top = Math.min(startY, endY);
   const width = Math.abs(endX - startX);
   const height = Math.abs(endY - startY);
-
-  console.log('SelectionBox dimensions', { left, top, width, height });
 
   return (
     <div
