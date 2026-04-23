@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt';
+import { prisma } from '../utils/db';
 
 const users: any[] = []; // temporary (DB later)
 
@@ -11,20 +12,22 @@ export const authService = {
       throw new Error('Email and password required');
     }
 
-    const existingUser = users.find((u) => u.email === email);
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
     if (existingUser) {
       throw new Error('User already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = {
-      id: Date.now().toString(),
-      email,
-      password: hashedPassword,
-    };
-
-    users.push(newUser);
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
 
     return {
       message: 'User registered',
@@ -35,7 +38,9 @@ export const authService = {
   async login(data: any) {
     const { email, password } = data;
 
-    const user = users.find((u) => u.email === email);
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
       throw new Error('Invalid credentials');
@@ -57,5 +62,5 @@ export const authService = {
       user: { id: user.id, email: user.email },
       token,
     };
-  },
+  }
 };
