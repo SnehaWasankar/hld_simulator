@@ -136,6 +136,8 @@ export default function Simulator() {
   const [selectionBox, setSelectionBox] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
   const [clipboard, setClipboard] = useState<{ nodes: Node<SimulationNodeData>[]; edges: Edge[] } | null>(null);
   const undoRedoRef = useRef<SimpleUndoRedo>(new SimpleUndoRedo());
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
   const [simulationParams, setSimulationParams] = useState<SimulationParams>(DEFAULT_PARAMS);
   const [hydrated, setHydrated] = useState(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
@@ -162,11 +164,16 @@ export default function Simulator() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  
+  // Keep refs in sync with current state for saveToHistory
+  useEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [nodes, edges]);
+
   // Save current state to history - using simple undo/redo system
   const saveToHistory = useCallback(() => {
-    undoRedoRef.current.saveState(nodes, edges);
-  }, [nodes, edges]);
+    undoRedoRef.current.saveState(nodesRef.current, edgesRef.current);
+  }, []);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -501,6 +508,11 @@ export default function Simulator() {
       setSelectedNode(null);
       setSelectedNodes([]);
 
+      // Save the loaded preset state to history after a short delay
+      setTimeout(() => {
+        saveToHistory();
+      }, 100);
+
       // Fit view after loading
       setTimeout(() => {
         reactFlowRef.current?.fitView({ padding: 0.2 });
@@ -517,7 +529,7 @@ export default function Simulator() {
       setSelectedNode(null);
       setSelectedNodes([]);
       setSelectedEdge(null);
-      
+
       // Restore the state directly
       setNodes(prevState.nodes);
       setEdges(prevState.edges);
@@ -532,7 +544,7 @@ export default function Simulator() {
       setSelectedNode(null);
       setSelectedNodes([]);
       setSelectedEdge(null);
-      
+
       // Restore the state directly
       setNodes(nextState.nodes);
       setEdges(nextState.edges);
@@ -541,16 +553,27 @@ export default function Simulator() {
 
   // Copy functionality
   const copy = useCallback(() => {
+    // Handle single node select
+    if (selectedNode && selectedNodes.length === 0) {
+      const nodesToCopy = nodes.filter(node => node.id === selectedNode.id);
+      const edgesToCopy = edges.filter(edge =>
+        edge.source === selectedNode.id || edge.target === selectedNode.id
+      );
+      setClipboard({ nodes: nodesToCopy, edges: edgesToCopy });
+      return;
+    }
+
+    // Handle multi-select
     if (selectedNodes.length === 0) return;
-    
+
     const selectedNodeIds = new Set(selectedNodes);
     const nodesToCopy = nodes.filter(node => selectedNodeIds.has(node.id));
-    const edgesToCopy = edges.filter(edge => 
+    const edgesToCopy = edges.filter(edge =>
       selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target)
     );
-    
+
     setClipboard({ nodes: nodesToCopy, edges: edgesToCopy });
-  }, [selectedNodes, nodes, edges]);
+  }, [selectedNodes, selectedNode, nodes, edges]);
 
   // Paste functionality
   const paste = useCallback(() => {
@@ -607,20 +630,59 @@ export default function Simulator() {
       }
 
       // Delete or Backspace to delete selected nodes
-      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodes.length > 0) {
-        event.preventDefault();
-        
-        // Delete the nodes first
-        selectedNodes.forEach(nodeId => {
-          deleteNode(nodeId);
-        });
-        setSelectedNodes([]);
-        
-        // Save state after deleting to capture the new state
-        setTimeout(() => {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        // Handle multi-select
+        if (selectedNodes.length > 0) {
+          event.preventDefault();
+
+          // Save state BEFORE deleting
           saveToHistory();
-        }, 100);
-        return;
+
+          // Batch delete all selected nodes at once
+          setNodes((nds) => nds.filter((n) => !selectedNodes.includes(n.id)));
+          setEdges((eds) => eds.filter((e) => !selectedNodes.includes(e.source) && !selectedNodes.includes(e.target)));
+
+          // Clear all selections
+          setSelectedNode(null);
+          setSelectedNodes([]);
+          setSelectedEdge(null);
+          return;
+        }
+
+        // Handle single node select
+        if (selectedNode) {
+          event.preventDefault();
+
+          // Save state BEFORE deleting
+          saveToHistory();
+
+          // Delete the single selected node
+          setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+          setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+
+          // Clear selections
+          setSelectedNode(null);
+          setSelectedNodes([]);
+          setSelectedEdge(null);
+          return;
+        }
+
+        // Handle single edge select
+        if (selectedEdge) {
+          event.preventDefault();
+
+          // Save state BEFORE deleting
+          saveToHistory();
+
+          // Delete the selected edge
+          setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+
+          // Clear selections
+          setSelectedNode(null);
+          setSelectedNodes([]);
+          setSelectedEdge(null);
+          return;
+        }
       }
 
       // Ctrl+A to select all nodes
@@ -670,14 +732,30 @@ export default function Simulator() {
       // Ctrl+X or Cmd+X to cut
       if (event.key === 'x' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
+        // Handle single node select
+        if (selectedNode && selectedNodes.length === 0) {
+          copy();
+          // Save state before cutting
+          saveToHistory();
+          setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+          setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+          setSelectedNode(null);
+          setSelectedNodes([]);
+          setSelectedEdge(null);
+          return;
+        }
+
+        // Handle multi-select
         if (selectedNodes.length > 0) {
           copy();
           // Save state before cutting
           saveToHistory();
-          selectedNodes.forEach(nodeId => {
-            deleteNode(nodeId);
-          });
+          setNodes((nds) => nds.filter((n) => !selectedNodes.includes(n.id)));
+          setEdges((eds) => eds.filter((e) => !selectedNodes.includes(e.source) && !selectedNodes.includes(e.target)));
+          setSelectedNode(null);
           setSelectedNodes([]);
+          setSelectedEdge(null);
+          return;
         }
         return;
       }
@@ -685,7 +763,7 @@ export default function Simulator() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodes, nodes, deleteNode, saveToHistory, undo, redo, copy, paste]);
+  }, [selectedNodes, selectedNode, nodes, deleteNode, saveToHistory, undo, redo, copy, paste]);
 
   // Initialize history system when hydrated
   useEffect(() => {
@@ -899,7 +977,6 @@ export default function Simulator() {
             onDragOver={onDragOver}
             onDrop={onDrop}
             selectionKeyCode="Shift"
-            deleteKeyCode={['Delete', 'Backspace']}
             multiSelectionKeyCode="Shift"
             onMouseDown={handleSelectionStart}
             onMouseMove={handleSelectionMove}
