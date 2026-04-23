@@ -20,7 +20,6 @@ export default function SelectionBox({ startX, startY, endX, endY, isActive }: S
   const width = Math.abs(endX - startX);
   const height = Math.abs(endY - startY);
 
-
   return (
     <div
       className="absolute pointer-events-none border-2 border-blue-500 bg-blue-500/10 z-[1000]"

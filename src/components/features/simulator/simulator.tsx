@@ -55,6 +55,8 @@ import {
   Zap,
   BookOpen,
 } from 'lucide-react';
+import AuthModal from '@/components/features/auth/auth-modal';
+import { useAuth } from '@/context/auth';
 
 const nodeTypes: NodeTypes = {
   infra: InfraNode,
@@ -148,6 +150,7 @@ export default function Simulator() {
   const [rightTab, setRightTab] = useState('components');
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const reactFlowRef = useRef<ReactFlowInstance<Node<SimulationNodeData>, Edge> | null>(null);
+  const { openAuth } = useAuth();
   
   // Restore from localStorage after first client-side mount (avoids SSR mismatch)
   useEffect(() => {
@@ -821,6 +824,36 @@ export default function Simulator() {
   const leftPanel = useResizable(256, 180, 480, false);
   const rightPanel = useResizable(288, 220, 560, true);
 
+  const handleSaveDesign = useCallback(() => {
+    const token = localStorage.getItem('token');
+
+    // Not logged in
+    if (!token) {
+      openAuth(); // opens login modal
+      return;
+    }
+
+    const name = prompt('Enter design name');
+    if (!name) return;
+
+    const design = {
+      id: Date.now(),
+      name,
+      nodes,
+      edges,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('archscope-designs') || '[]');
+      existing.push(design);
+      localStorage.setItem('archscope-designs', JSON.stringify(existing));
+      alert('Design saved!');
+    } catch (e) {
+      alert('Failed to save design');
+    }
+  }, [nodes, edges]);
+
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50">
       {/* Top Bar */}
@@ -871,10 +904,20 @@ export default function Simulator() {
             </Button>
           </Link>
 
-          {/* Profile Icon */}
-          <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300">
+          {/* Profile Icon - will need after login*/}
+          {/* <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300">
             <User className="w-4 h-4 text-gray-700" />
-          </button>
+          </button> */}
+
+          {/* Login/ Sign Up Icon */}
+          <AuthModal>
+            <Button variant="outline" size="sm"
+                    className="bg-blue-500/20 text-blue-800 border border-blue-200 
+                    hover:bg-blue-500/10 hover:border-blue-400
+                    font-medium transition-all duration-200">
+              Login / Sign Up
+            </Button>
+          </AuthModal>
         </div>
       </div>
 
@@ -911,6 +954,17 @@ export default function Simulator() {
 
         {/* Canvas */}
         <div className="flex-1 relative">
+          <div className="absolute top-4 right-4 z-10">
+            <Button
+              size="sm"
+              onClick={handleSaveDesign}
+              className="bg-green-500/20 text-green-700 border border-green-200 
+              hover:bg-green-500/30 hover:border-green-400
+              font-medium transition-all duration-200"
+            >
+              Save Design
+            </Button>
+          </div>
           <ReactFlow
             nodes={memoizedNodes}
             edges={memoizedEdges}
