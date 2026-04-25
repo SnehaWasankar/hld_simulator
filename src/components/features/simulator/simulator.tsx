@@ -58,13 +58,16 @@ import { nodeTypes } from './constants';
 import { getUserColor } from './utils/storage';
 
 export default function Simulator() {
+  // Local State
   const [rightTab, setRightTab] = useState('components');
   const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
 
+  // Authentication
   const { user, openAuth, logout } = useAuth();
   const color = user ? getUserColor(user.email) : null;
 
+  // Custom Hooks - State Management
   const simulatorState = useSimulatorState();
   const {
     nodes,
@@ -92,6 +95,7 @@ export default function Simulator() {
     saveToHistory,
   } = simulatorState;
 
+  // Custom Hooks - Simulation Logic
   const simulation = useSimulation(nodes, edges, simulationParams, setNodes);
   const {
     simulationResult,
@@ -104,6 +108,7 @@ export default function Simulator() {
     handleReset,
   } = simulation;
 
+  // Custom Hooks - Selection & Events
   const selection = useSelection(nodes, reactFlowRef);
   const { isSelecting, selectionBox, handleSelectionStart, handleSelectionMove, handleSelectionEnd } = selection;
 
@@ -120,6 +125,7 @@ export default function Simulator() {
   });
   const { onNodeClick, onPaneClick, onEdgeClick, onConnect, onDragOver, onDrop } = nodeEvents;
 
+  // Custom Hooks - Keyboard Shortcuts
   useKeyboardShortcuts({
     selectedNodes,
     selectedNode,
@@ -137,6 +143,7 @@ export default function Simulator() {
     setSelectedEdge,
   });
 
+  // Memoized Values
   const selectedNodeForPanel = useMemo(() => {
     if (!selectedNode) return null;
     return nodes.find((n) => n.id === selectedNode.id) || null;
@@ -174,9 +181,11 @@ export default function Simulator() {
     [edges, selectedEdge]
   );
 
+  // Custom Hooks - Resizable Panels
   const leftPanel = useResizable(256, 180, 480, false);
   const rightPanel = useResizable(288, 220, 560, true);
 
+  // Event Handlers
   const loadPreset = useCallback(
     (presetId: string | null) => {
       if (!presetId) return;
@@ -242,9 +251,10 @@ export default function Simulator() {
     alert('Design saved to DB!');
   }, [nodes, edges, openAuth]);
 
+  // Render
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50">
-      {/* Top Bar */}
+      {/* Top Bar - Navigation & Auth */}
       <div className="h-12 border-b bg-white flex items-center justify-between px-4 flex-shrink-0 z-10">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -351,9 +361,9 @@ export default function Simulator() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - 3-Panel Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar */}
+        {/* Left Sidebar - Simulation Controls */}
         <div className="border-r bg-white flex flex-col flex-shrink-0" style={{ width: leftPanel.size }}>
           <div className="p-3 overflow-y-auto flex-1">
             <SimulationControls
@@ -382,7 +392,7 @@ export default function Simulator() {
           </div>
         </div>
 
-        {/* Canvas */}
+        {/* Center Canvas - React Flow Diagram */}
         <div className="flex-1 relative">
           <div className="absolute top-4 right-4 z-10">
             <Button
@@ -501,7 +511,7 @@ export default function Simulator() {
           </div>
         </div>
 
-        {/* Right Sidebar */}
+        {/* Right Sidebar - Component Palette, Config, Report */}
         <div className="border-l bg-white flex flex-col flex-shrink-0" style={{ width: rightPanel.size }}>
           <Tabs value={rightTab} onValueChange={(val) => setRightTab(val as string)} className="flex flex-col h-full">
             <TabsList className="flex-shrink-0 m-2 grid grid-cols-3 w-full">
@@ -519,6 +529,7 @@ export default function Simulator() {
               </TabsTrigger>
             </TabsList>
 
+            {/* Tab: Component Palette */}
             <TabsContent value="components"
               className="flex-1 min-h-0 m-0 bg-gray-50">
               <div className="h-full overflow-y-auto">
@@ -526,7 +537,7 @@ export default function Simulator() {
               </div>
             </TabsContent>
 
-
+            {/* Tab: Configuration Panel */}
             <TabsContent value="config" className="flex-1 overflow-hidden m-0">
               <ScrollArea className="h-full">
                 <ConfigPanel
@@ -537,6 +548,7 @@ export default function Simulator() {
               </ScrollArea>
             </TabsContent>
 
+            {/* Tab: Simulation Report */}
             <TabsContent value="report" className="flex-1 overflow-hidden m-0">
               <ReportPanel result={simulationResult} liveTimeSeries={liveTimeSeries} isRunning={isRunning} />
             </TabsContent>
