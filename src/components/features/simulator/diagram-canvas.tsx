@@ -43,6 +43,7 @@ interface DiagramCanvasProps {
   isMinimapCollapsed: boolean;
   setIsMinimapCollapsed: (collapsed: boolean) => void;
   handleSaveDesign: () => void;
+  handleResetCanvas: () => void;
 }
 
 export default function DiagramCanvas({
@@ -66,10 +67,11 @@ export default function DiagramCanvas({
   isMinimapCollapsed,
   setIsMinimapCollapsed,
   handleSaveDesign,
+  handleResetCanvas
 }: DiagramCanvasProps) {
   return (
     <div className="flex-1 relative">
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
         <Button
           size="sm"
           onClick={handleSaveDesign}
@@ -78,6 +80,16 @@ export default function DiagramCanvas({
           font-medium transition-all duration-200"
         >
           Save Design
+        </Button>
+
+        <Button
+          size="sm"
+          onClick={handleResetCanvas}
+          className="bg-yellow-500/20 text-yellow-800 border border-yellow-200 
+          hover:bg-yellow-500/30 hover:border-yellow-400
+          font-medium transition-all duration-200"
+        >
+          Reset
         </Button>
       </div>
       {!isMinimapCollapsed && (

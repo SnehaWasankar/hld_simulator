@@ -18,9 +18,10 @@ import AuthProfile from './auth-profile';
 interface SimulatorHeaderProps {
   selectedNodesCount: number;
   loadPreset: (presetId: string | null) => void;
+  handleLoadDesigns: () => void;
 }
 
-export default function SimulatorHeader({ selectedNodesCount, loadPreset }: SimulatorHeaderProps) {
+export default function SimulatorHeader({ selectedNodesCount, loadPreset, handleLoadDesigns }: SimulatorHeaderProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -72,6 +73,16 @@ export default function SimulatorHeader({ selectedNodesCount, loadPreset }: Simu
             Get Started
           </Button>
         </Link>
+
+        <Button
+          size="sm"
+          onClick={handleLoadDesigns}
+          className="bg-purple-500/20 text-purple-800 border border-purple-200 
+          hover:bg-purple-500/10 hover:border-purple-400
+          transition-all duration-200"
+        >
+          My Designs
+        </Button>
 
         <AuthProfile open={open} setOpen={setOpen} />
       </div>
