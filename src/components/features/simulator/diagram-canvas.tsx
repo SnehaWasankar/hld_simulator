@@ -81,7 +81,7 @@ export default function DiagramCanvas({
 }: DiagramCanvasProps) {
   const [selectedPresetName, setSelectedPresetName] = React.useState<string | null>(null);
   return (
-    <div className="flex-1 relative">
+    <div className="flex-1 relative z-0">
       <div className="absolute top-4 right-4 z-10 flex gap-2">
         <Button
           size="sm"
@@ -113,7 +113,8 @@ export default function DiagramCanvas({
           <Minus className="w-2 h-2 text-gray-700" />
         </div>
       )}
-      <ReactFlow
+      <ReactFlow 
+        style={{ zIndex: 0 }}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -135,7 +136,7 @@ export default function DiagramCanvas({
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{
           animated: false,
-          style: { stroke: '#94a3b8', strokeWidth: 2 },
+          style: { stroke: '#94a3b8', strokeWidth: 2, zIndex: 0 },
         }}
         className="bg-gray-50"
       >
@@ -179,8 +180,8 @@ export default function DiagramCanvas({
             > */}
             <SelectTrigger
               className="h-8 text-xs px-3
-              bg-purple-500/20 text-purple-800 border border-purple-200
-              hover:bg-purple-500/30 hover:border-purple-400
+              bg-pink-500/20 text-pink-800 border border-pink-200
+              hover:bg-pink-500/30 hover:border-pink-400
               font-medium transition-all duration-200"
             >
               {/* <SelectValue placeholder="Presets" /> */}

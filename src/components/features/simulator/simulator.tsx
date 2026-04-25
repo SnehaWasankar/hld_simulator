@@ -228,39 +228,11 @@ export default function Simulator() {
     setEdges([]);
   }, [setNodes, setEdges]);
 
-  const handleLoadDesigns = useCallback(async () => {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      alert('Please login first');
-      return;
-    }
-
-    const res = await fetch('/api/designs', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    if (!data.designs.length) {
-      alert('No saved designs');
-      return;
-    }
-
-    // TEMP: load first design
-    const design = data.designs[0];
+  const handleLoadDesigns = useCallback((design: any) => {
+    if (!design) return;
 
     setNodes(design.nodes);
     setEdges(design.edges);
-
-    alert(`Loaded: ${design.name}`);
   }, [setNodes, setEdges]);
 
   // Render
