@@ -54,6 +54,8 @@ import {
   Network,
   Zap,
   BookOpen,
+  Minus,
+  Map,
 } from 'lucide-react';
 import AuthModal from '@/components/features/auth/auth-modal';
 import { useAuth } from '@/context/auth';
@@ -149,6 +151,7 @@ export default function Simulator() {
   const simTickRef = useRef<{ second: number; series: TimeSeriesDataPoint[] }>({ second: 0, series: [] });
   const [rightTab, setRightTab] = useState('components');
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+  const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
   const reactFlowRef = useRef<ReactFlowInstance<Node<SimulationNodeData>, Edge> | null>(null);
   const { openAuth } = useAuth();
   
@@ -965,6 +968,16 @@ export default function Simulator() {
               Save Design
             </Button>
           </div>
+          {!isMinimapCollapsed && (
+            <div
+              onClick={() => setIsMinimapCollapsed(true)}
+              className="w-4 h-4 bg-white border-2 border-gray-300 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all cursor-pointer"
+              style={{ position: 'absolute', bottom: '172px', right: '25px', zIndex: 9999 }}
+              title="Collapse minimap"
+            >
+              <Minus className="w-2 h-2 text-gray-700" />
+            </div>
+          )}
           <ReactFlow
             nodes={memoizedNodes}
             edges={memoizedEdges}
@@ -993,14 +1006,27 @@ export default function Simulator() {
           >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#d1d5db" />
             <Controls className="!bg-white !border !shadow-md !rounded-lg" />
-            <MiniMap
-              nodeColor={(node) => {
-                const data = node.data as SimulationNodeData;
-                return COMPONENT_COLORS[data.componentType] || '#6366f1';
-              }}
-              className="!bg-white !border !shadow-md !rounded-lg"
-              maskColor="rgba(0,0,0,0.05)"
-            />
+            {!isMinimapCollapsed && (
+              <Panel position="bottom-right" className="!p-0">
+                <MiniMap
+                  nodeColor={(node) => {
+                    const data = node.data as SimulationNodeData;
+                    return COMPONENT_COLORS[data.componentType] || '#6366f1';
+                  }}
+                  className="!bg-white !border !shadow-md !rounded-lg"
+                />
+              </Panel>
+            )}
+            {isMinimapCollapsed && (
+              <Panel position="bottom-right" className="!p-0">
+                <button
+                  onClick={() => setIsMinimapCollapsed(false)}
+                  className="w-10 h-10 bg-white border border-gray-300 rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
+                >
+                  <Map className="w-5 h-5 text-gray-600" />
+                </button>
+              </Panel>
+            )}
             <Panel position="top-left" className="flex flex-col gap-2">
               <Badge variant="outline" className="text-[10px]">
                 {nodes.length} components
