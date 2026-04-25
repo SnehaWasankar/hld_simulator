@@ -31,7 +31,6 @@ import ComponentPalette from '@/components/features/architecture/component-palet
 import ConfigPanel from '@/components/features/simulator/config-panel';
 import SimulationControls from '@/components/features/simulator/simulation-controls';
 import ReportPanel from '@/components/features/analytics/report-panel';
-import LiveClientPanel from '@/components/features/analytics/live-client-panel';
 import SelectionBox from '@/components/features/architecture/selection-box';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,7 +51,6 @@ import {
   BarChart3,
   Boxes,
   Network,
-  Zap,
   BookOpen,
   Minus,
   Map,
@@ -1110,14 +1108,10 @@ export default function Simulator() {
         {/* Right Sidebar */}
         <div className="border-l bg-white flex flex-col flex-shrink-0" style={{ width: rightPanel.size }}>
           <Tabs value={rightTab} onValueChange={(val) => setRightTab(val as string)} className="flex flex-col h-full">
-            <TabsList className="flex-shrink-0 m-2 grid grid-cols-4">
+            <TabsList className="flex-shrink-0 m-2 grid grid-cols-3 w-full">
               <TabsTrigger value="components" className="text-xs gap-1">
                 <LayoutGrid className="w-3 h-3" />
                 Add
-              </TabsTrigger>
-              <TabsTrigger value="live" className="text-xs gap-1">
-                <Zap className="w-3 h-3" />
-                Live
               </TabsTrigger>
               <TabsTrigger value="config" className="text-xs gap-1">
                 <Settings2 className="w-3 h-3" />
@@ -1136,13 +1130,6 @@ export default function Simulator() {
               </div>
             </TabsContent>
 
-            <TabsContent value="live" className="flex-1 overflow-hidden m-0 min-h-0">
-              <LiveClientPanel
-                nodes={nodes}
-                edges={edges}
-                onHighlightNode={setHighlightedNodeId}
-              />
-            </TabsContent>
 
             <TabsContent value="config" className="flex-1 overflow-hidden m-0">
               <ScrollArea className="h-full">

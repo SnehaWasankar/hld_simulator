@@ -8,7 +8,7 @@ interface SelectionBoxProps {
   startY: number;
   endX: number;
   endY: number;
-  isActive: boolean;
+  isActive: boolean;  
 }
 
 export default function SelectionBox({ startX, startY, endX, endY, isActive }: SelectionBoxProps) {
