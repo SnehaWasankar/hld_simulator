@@ -323,6 +323,7 @@ export default function Simulator() {
           setIsMinimapCollapsed={setIsMinimapCollapsed}
           handleSaveDesign={handleSaveDesign}
           handleResetCanvas={handleResetCanvas}
+          loadPreset={loadPreset}
         />
 
         {/* Right Resize Handle */}

@@ -21,6 +21,14 @@ import { Badge } from '@/components/ui/badge';
 import { Boxes, Minus, Map } from 'lucide-react';
 import SelectionBox from '@/components/features/architecture/selection-box';
 import { nodeTypes } from './constants';
+import { PRESETS } from '@/data';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DiagramCanvasProps {
   nodes: Node<SimulationNodeData>[];
@@ -44,6 +52,7 @@ interface DiagramCanvasProps {
   setIsMinimapCollapsed: (collapsed: boolean) => void;
   handleSaveDesign: () => void;
   handleResetCanvas: () => void;
+  loadPreset: (presetId: string | null) => void;
 }
 
 export default function DiagramCanvas({
@@ -67,8 +76,10 @@ export default function DiagramCanvas({
   isMinimapCollapsed,
   setIsMinimapCollapsed,
   handleSaveDesign,
-  handleResetCanvas
+  handleResetCanvas,
+  loadPreset
 }: DiagramCanvasProps) {
+  const [selectedPresetName, setSelectedPresetName] = React.useState<string | null>(null);
   return (
     <div className="flex-1 relative">
       <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -151,13 +162,71 @@ export default function DiagramCanvas({
             </button>
           </Panel>
         )}
-        <Panel position="top-left" className="flex flex-col gap-2">
-          <Badge variant="outline" className="text-[10px]">
-            {nodes.length} components
-          </Badge>
-          <Badge variant="outline" className="text-[10px]">
-            {edges.length} connections
-          </Badge>
+        <Panel position="top-left">
+          {/* <Select onValueChange={loadPreset}> */}
+          <Select
+            onValueChange={(id: string | null) => {
+              const preset = PRESETS.find((p) => p.id === id);
+              setSelectedPresetName(preset?.name || null);
+              loadPreset(id);
+            }}
+          >
+            {/* <SelectTrigger
+              className="h-8 text-xs
+              bg-indigo-500/20 text-indigo-900 border border-indigo-200
+              hover:bg-indigo-500/10 hover:border-indigo-400
+              transition-all duration-200"
+            > */}
+            <SelectTrigger
+              className="h-8 text-xs px-3
+              bg-purple-500/20 text-purple-800 border border-purple-200
+              hover:bg-purple-500/30 hover:border-purple-400
+              font-medium transition-all duration-200"
+            >
+              {/* <SelectValue placeholder="Presets" /> */}
+              <span className="flex items-center gap-1">
+                <span className="font-medium">Presets</span>
+                {selectedPresetName && (
+                  <span className="text-indigo-700/60 truncate max-w-25">
+                    – {selectedPresetName}
+                  </span>
+                )}
+              </span>
+            </SelectTrigger>
+
+            <SelectContent 
+              side="bottom"
+              align="start"
+              sideOffset={8}
+              alignItemWithTrigger={false}
+              className="
+              w-(--radix-select-trigger-width)
+              max-h-35
+              overflow-y-auto
+              bg-white border border-indigo-100 shadow-xl rounded-lg p-1"
+            >
+              {PRESETS.map((p) => (
+                <SelectItem
+                  key={p.id}
+                  value={p.id}
+                  className="
+                    scrollbar-thin scrollbar-thumb-gray-300
+                    px-2 py-1.5 rounded-md text-sm cursor-pointer
+                    focus:bg-indigo-50 data-[state=checked]:bg-indigo-100
+                  "
+                >
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-medium text-gray-800 text-xs">
+                      {p.name}
+                    </span>
+                    <span className="text-[10px] text-gray-400 truncate">
+                      {p.description}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Panel>
         <Panel position="top-center">
           {nodes.length === 0 && (
