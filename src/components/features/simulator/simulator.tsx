@@ -582,13 +582,13 @@ export default function Simulator() {
     if (!clipboard) return;
     
     // Create new IDs for copied nodes
-    const idMap = new Map<string, string>();
+    const idMap: Record<string, string> = {};
     const offsetX = 50;
     const offsetY = 50;
     
     const newNodes = clipboard.nodes.map(node => {
       const newId = `node_${++nodeIdCounter}_${Date.now()}`;
-      idMap.set(node.id, newId);
+      idMap[node.id] = newId;
       
       return {
         ...node,
@@ -603,8 +603,8 @@ export default function Simulator() {
     const newEdges = clipboard.edges.map(edge => ({
       ...edge,
       id: `edge_${Date.now()}_${Math.random()}`,
-      source: idMap.get(edge.source) || edge.source,
-      target: idMap.get(edge.target) || edge.target,
+      source: idMap[edge.source] || edge.source,
+      target: idMap[edge.target] || edge.target,
       style: { stroke: '#94a3b8', strokeWidth: 2 },
     }));
     
