@@ -2,28 +2,35 @@ import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt';
 import { prisma } from '../utils/db';
 
-const users: any[] = []; // temporary (DB later)
-
 export const authService = {
   async register(data: any) {
-    const { email, password } = data;
+    const { username, email, password } = data;
 
-    if (!email || !password) {
-      throw new Error('Email and password required');
+    if (!username || !email || !password) {
+      throw new Error('Email, username and password required');
     }
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
+    const existingUsername = await prisma.user.findUnique({
+      where: { username },
+    });
+
     if (existingUser) {
-      throw new Error('User already exists');
+      throw new Error('Email already exists');
+    }
+
+    if (existingUsername) {
+      throw new Error('Username already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
       data: {
+        username,
         email,
         password: hashedPassword,
       },

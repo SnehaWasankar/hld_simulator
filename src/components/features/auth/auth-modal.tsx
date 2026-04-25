@@ -15,6 +15,7 @@ export default function AuthModal({
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
 
     async function handleSubmit() {
         const res = await fetch('/api/auth', {
@@ -22,8 +23,9 @@ export default function AuthModal({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: mode,
+                username,
                 email,
-                password,
+                password
             }),
         });
 
@@ -68,6 +70,14 @@ export default function AuthModal({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
+
+                    {mode === 'register' && (
+                    <Input
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
+                    )}
 
                     <Button onClick={handleSubmit} className="w-full">
                         {mode === 'login' ? 'Login' : 'Register'}

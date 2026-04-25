@@ -824,7 +824,7 @@ export default function Simulator() {
   const leftPanel = useResizable(256, 180, 480, false);
   const rightPanel = useResizable(288, 220, 560, true);
 
-  const handleSaveDesign = useCallback(() => {
+  const handleSaveDesign = useCallback(async () => {
     const token = localStorage.getItem('token');
 
     // Not logged in
@@ -836,23 +836,28 @@ export default function Simulator() {
     const name = prompt('Enter design name');
     if (!name) return;
 
-    const design = {
-      id: Date.now(),
-      name,
-      nodes,
-      edges,
-      createdAt: new Date().toISOString(),
-    };
+    const res = await fetch('/api/designs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name,
+        nodes,
+        edges,
+      }),
+    });
 
-    try {
-      const existing = JSON.parse(localStorage.getItem('archscope-designs') || '[]');
-      existing.push(design);
-      localStorage.setItem('archscope-designs', JSON.stringify(existing));
-      alert('Design saved!');
-    } catch (e) {
-      alert('Failed to save design');
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error);
+      return;
     }
-  }, [nodes, edges]);
+
+    alert('Design saved to DB!');
+  }, [nodes, edges, openAuth]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50">
