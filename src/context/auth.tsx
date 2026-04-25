@@ -1,23 +1,60 @@
 'use client';
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
-type AuthContextType = {
+interface User {
+  id: string;
+  email: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  isOpen: boolean;
   openAuth: () => void;
   closeAuth: () => void;
-  isOpen: boolean;
-};
+  login: (user: User, token: string) => void;
+  logout: () => void;
+}
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  const openAuth = () => setIsOpen(true);
-  const closeAuth = () => setIsOpen(false);
+  // Restore session on refresh
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  function login(user: User, token: string) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    setUser(user);
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  }
 
   return (
-    <AuthContext.Provider value={{ openAuth, closeAuth, isOpen }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isOpen,
+        openAuth: () => setIsOpen(true),
+        closeAuth: () => setIsOpen(false),
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
