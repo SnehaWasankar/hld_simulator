@@ -55,7 +55,6 @@ import {
   Zap,
   BookOpen,
 } from 'lucide-react';
-import AuthModal from '@/components/features/auth/auth-modal';
 import { useAuth } from '@/context/auth';
 
 const nodeTypes: NodeTypes = {
@@ -150,8 +149,10 @@ export default function Simulator() {
   const [rightTab, setRightTab] = useState('components');
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const reactFlowRef = useRef<ReactFlowInstance<Node<SimulationNodeData>, Edge> | null>(null);
-  const { openAuth } = useAuth();
-  
+
+  const { user, openAuth, logout } = useAuth();
+  const [open, setOpen] = useState(false);  
+
   // Restore from localStorage after first client-side mount (avoids SSR mismatch)
   useEffect(() => {
     const saved = loadFromStorage();
@@ -914,15 +915,42 @@ export default function Simulator() {
             <User className="w-4 h-4 text-gray-700" />
           </button> */}
 
-          {/* Login/ Sign Up Icon */}
-          <AuthModal>
-            <Button variant="outline" size="sm"
-                    className="bg-blue-500/20 text-blue-800 border border-blue-200 
-                    hover:bg-blue-500/10 hover:border-blue-400
-                    font-medium transition-all duration-200">
+          {/* Login/ Sign Up Icon --> Profile*/}
+          {user ? (
+            <div className="relative">
+              <div
+                onClick={() => setOpen(!open)}
+                className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center cursor-pointer font-semibold"
+              >
+                {user.email[0].toUpperCase()}
+              </div>
+
+              {open && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-md">
+                  <button
+                    onClick={() => {
+                      logout();
+                      setOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Button
+              onClick={openAuth}
+              variant="outline"
+              size="sm"
+              className="bg-blue-500/20 text-blue-800 border border-blue-200 
+              hover:bg-blue-500/10 hover:border-blue-400
+              font-medium transition-all duration-200"
+            >
               Login / Sign Up
             </Button>
-          </AuthModal>
+          )}
         </div>
       </div>
 
