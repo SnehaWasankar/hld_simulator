@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   ReactFlow,
@@ -9,24 +9,16 @@ import {
   MiniMap,
   Node,
   Edge,
-  Connection,
-  addEdge,
-  useNodesState,
-  useEdgesState,
   BackgroundVariant,
   Panel,
-  NodeTypes,
   ReactFlowInstance,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { SimulationNodeData, SimulationParams, SimulationResult, ComponentType, TimeSeriesDataPoint } from '@/types';
-import { COMPONENT_DEFAULTS, COMPONENT_LABELS, COMPONENT_COLORS } from '@/lib/services';
-import { prepareSimulation, simulateTick, finalizeSimulation, SimulationContext } from '@/lib/core';
+import { SimulationNodeData } from '@/types';
+import { COMPONENT_COLORS } from '@/lib/services';
 import { PRESETS } from '@/data';
-import { SimpleUndoRedo } from '@/components/common/simple-undo-redo';
 
-import InfraNode from '@/components/features/architecture/infra-node';
 import ComponentPalette from '@/components/features/architecture/component-palette';
 import ConfigPanel from '@/components/features/simulator/config-panel';
 import SimulationControls from '@/components/features/simulator/simulation-controls';
@@ -37,7 +29,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { User } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -57,457 +48,134 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/auth';
 
-const nodeTypes: NodeTypes = {
-  infra: InfraNode,
-};
-
-let nodeIdCounter = 0;
-
-function useResizable(initial: number, min: number, max: number, inverted = false) {
-  const sizeRef = useRef(initial);
-  const [size, setSize] = useState(initial);
-  const startX = useRef(0);
-  const startSize = useRef(initial);
-
-  useEffect(() => { sizeRef.current = size; }, [size]);
-
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    startX.current = e.clientX;
-    startSize.current = sizeRef.current;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const onMouseMove = (ev: MouseEvent) => {
-      const delta = (ev.clientX - startX.current) * (inverted ? -1 : 1);
-      const next = Math.min(max, Math.max(min, startSize.current + delta));
-      sizeRef.current = next;
-      setSize(next);
-    };
-    const onMouseUp = () => {
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  }, [min, max, inverted]);
-
-  return { size, onMouseDown };
-}
-
-const STORAGE_KEY = 'archscope-state';
-
-function loadFromStorage(): { nodes: Node<SimulationNodeData>[]; edges: Edge[]; params: SimulationParams } | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveToStorage(nodes: Node<SimulationNodeData>[], edges: Edge[], params: SimulationParams) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges, params }));
-  } catch { /* quota exceeded — ignore */ }
-}
-
-const DEFAULT_PARAMS: SimulationParams = {
-  concurrentUsers: 100,
-  requestsPerSecPerUser: 1,
-  payloadSizeMB: 0.1,
-  simulationDurationSeconds: 60,
-  loadProfile: 'constant',
-  spikeFrequency: 3,
-  spikeIntensity: 3,
-};
-
-function getUserColor(seed: string) {
-  const colors = [
-    { bg: 'bg-blue-500/20', text: 'text-blue-800', border: 'border-blue-200', hover: 'hover:bg-blue-500/10 hover:border-blue-400' },
-    { bg: 'bg-pink-500/20', text: 'text-pink-800', border: 'border-pink-200', hover: 'hover:bg-pink-500/10 hover:border-pink-400' },
-    { bg: 'bg-green-500/20', text: 'text-green-800', border: 'border-green-200', hover: 'hover:bg-green-500/10 hover:border-green-400' },
-    { bg: 'bg-purple-500/20', text: 'text-purple-800', border: 'border-purple-200', hover: 'hover:bg-purple-500/10 hover:border-purple-400' },
-    { bg: 'bg-orange-500/20', text: 'text-orange-800', border: 'border-orange-200', hover: 'hover:bg-orange-500/10 hover:border-orange-400' },
-  ];
-
-  // simple hash from email
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  return colors[Math.abs(hash) % colors.length];
-}
+import { useResizable } from './hooks/useResizable';
+import { useSimulatorState } from './hooks/useSimulatorState';
+import { useSimulation } from './hooks/useSimulation';
+import { useSelection } from './hooks/useSelection';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useNodeEvents } from './hooks/useNodeEvents';
+import { nodeTypes } from './constants';
+import { getUserColor } from './utils/storage';
 
 export default function Simulator() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<SimulationNodeData>>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [selectedNode, setSelectedNode] = useState<Node<SimulationNodeData> | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionBox, setSelectionBox] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
-  const [clipboard, setClipboard] = useState<{ nodes: Node<SimulationNodeData>[]; edges: Edge[] } | null>(null);
-  const undoRedoRef = useRef<SimpleUndoRedo>(new SimpleUndoRedo());
-  const nodesRef = useRef(nodes);
-  const edgesRef = useRef(edges);
-  const [simulationParams, setSimulationParams] = useState<SimulationParams>(DEFAULT_PARAMS);
-  const [hydrated, setHydrated] = useState(false);
-  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [simProgress, setSimProgress] = useState<{ elapsed: number; total: number } | null>(null);
-  const [liveTimeSeries, setLiveTimeSeries] = useState<TimeSeriesDataPoint[]>([]);
-  const simIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const simContextRef = useRef<SimulationContext | null>(null);
-  const simTickRef = useRef<{ second: number; series: TimeSeriesDataPoint[] }>({ second: 0, series: [] });
   const [rightTab, setRightTab] = useState('components');
-  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
-  const reactFlowRef = useRef<ReactFlowInstance<Node<SimulationNodeData>, Edge> | null>(null);
+  const [open, setOpen] = useState(false);
 
   const { user, openAuth, logout } = useAuth();
-  const [open, setOpen] = useState(false);  
-
   const color = user ? getUserColor(user.email) : null;
 
-  // Restore from localStorage after first client-side mount (avoids SSR mismatch)
-  useEffect(() => {
-    const saved = loadFromStorage();
-    if (saved) {
-      setNodes(saved.nodes.map((n) => ({ ...n, data: { ...n.data, metrics: undefined } })));
-      setEdges(saved.edges);
-      setSimulationParams(saved.params);
-    }
-    setHydrated(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const simulatorState = useSimulatorState();
+  const {
+    nodes,
+    edges,
+    selectedNode,
+    selectedEdge,
+    selectedNodes,
+    simulationParams,
+    reactFlowRef,
+    onNodesChange,
+    onEdgesChange,
+    setNodes,
+    setEdges,
+    addComponent,
+    updateNode,
+    deleteNode,
+    setSelectedNode,
+    setSelectedEdge,
+    setSelectedNodes,
+    setSimulationParams,
+    undo,
+    redo,
+    copy,
+    paste,
+    saveToHistory,
+  } = simulatorState;
 
-  // Keep refs in sync with current state for saveToHistory
-  useEffect(() => {
-    nodesRef.current = nodes;
-    edgesRef.current = edges;
-  }, [nodes, edges]);
+  const simulation = useSimulation(nodes, edges, simulationParams, setNodes);
+  const {
+    simulationResult,
+    setSimulationResult,
+    isRunning,
+    simProgress,
+    liveTimeSeries,
+    handleRunSimulation,
+    stopSimulation,
+    handleReset,
+  } = simulation;
 
-  // Save current state to history - using simple undo/redo system
-  const saveToHistory = useCallback(() => {
-    undoRedoRef.current.saveState(nodesRef.current, edgesRef.current);
-  }, []);
+  const selection = useSelection(nodes, reactFlowRef);
+  const { isSelecting, selectionBox, handleSelectionStart, handleSelectionMove, handleSelectionEnd } = selection;
 
-  const onConnect = useCallback(
-    (params: Connection) => {
-      // Add connection first, then save state
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            style: { stroke: '#94a3b8', strokeWidth: 2 },
-          },
-          eds
-        )
-      );
-      
-      setTimeout(() => {
-        saveToHistory();
-      }, 50);
-    },
-    [setEdges, saveToHistory]
-  );
+  const nodeEvents = useNodeEvents({
+    selectedNodes,
+    setSelectedNode,
+    setSelectedNodes,
+    setSelectedEdge,
+    setRightTab,
+    addComponent,
+    reactFlowRef,
+    setEdges,
+    saveToHistory,
+  });
+  const { onNodeClick, onPaneClick, onEdgeClick, onConnect, onDragOver, onDrop } = nodeEvents;
 
-  const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      event.stopPropagation();
-      
-      if (event.shiftKey && selectedNodes.length > 0) {
-        // Multi-select with shift key
-        const nodeId = node.id;
-        setSelectedNodes(prev => {
-          if (prev.includes(nodeId)) {
-            return prev.filter(id => id !== nodeId);
-          } else {
-            return [...prev, nodeId];
-          }
-        });
-        setSelectedNode(null);
-      } else {
-        // Normal single select
-        setSelectedNode(node as Node<SimulationNodeData>);
-        setSelectedNodes([]);
-        setRightTab('config');
-      }
-    },
-    [selectedNodes.length]
-  );
+  useKeyboardShortcuts({
+    selectedNodes,
+    selectedNode,
+    selectedEdge,
+    nodes,
+    setNodes,
+    setEdges,
+    saveToHistory,
+    undo,
+    redo,
+    copy,
+    paste,
+    setSelectedNode,
+    setSelectedNodes,
+    setSelectedEdge,
+  });
 
-  const onPaneClick = useCallback(() => {
-    setSelectedNode(null);
-    setSelectedEdge(null);
-    setSelectedNodes([]);
-  }, []);
+  const selectedNodeForPanel = useMemo(() => {
+    if (!selectedNode) return null;
+    return nodes.find((n) => n.id === selectedNode.id) || null;
+  }, [selectedNode, nodes]);
 
-  const onEdgeClick = useCallback(
-    (_: React.MouseEvent, edge: Edge) => {
-      setSelectedEdge(edge);
-      setSelectedNode(null);
-    },
-    []
-  );
-
-  const addComponent = useCallback(
-    (type: ComponentType, position?: { x: number; y: number }) => {
-      const id = `node_${++nodeIdCounter}_${Date.now()}`;
-      const newNode: Node<SimulationNodeData> = {
-        id,
-        type: 'infra',
-        position: position || {
-          x: 250 + Math.random() * 200,
-          y: 100 + nodes.length * 120,
-        },
+  const memoizedNodes = useMemo(
+    () =>
+      nodes.map((n) => ({
+        ...n,
         data: {
-          label: COMPONENT_LABELS[type],
-          componentType: type,
-          config: {
-            serviceId: COMPONENT_DEFAULTS[type],
-            cacheHitRate: type === 'cache' ? 0.8 : undefined,
-            queueProcessingTimeMs: type === 'message_queue' ? 100 : undefined,
-          },
+          ...n.data,
+          isMultiSelected: selectedNodes.includes(n.id),
         },
-      };
-      // Add component first, then save state
-      setNodes((nds) => [...nds, newNode]);
-      
-      setTimeout(() => {
-        saveToHistory();
-      }, 50);
-    },
-    [nodes.length, setNodes, saveToHistory]
+        className: [
+          n.id === selectedNode?.id ? 'selected-node' : '',
+          selectedNodes.includes(n.id) ? 'multi-selected-node' : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+        selected: selectedNodes.includes(n.id) || n.id === selectedNode?.id,
+      })),
+    [nodes, selectedNodes, selectedNode]
   );
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      const type = event.dataTransfer.getData('application/reactflow-type') as ComponentType;
-      if (!type) return;
-
-      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
-      const position = reactFlowRef.current?.screenToFlowPosition({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      }) || { x: event.clientX - reactFlowBounds.left, y: event.clientY - reactFlowBounds.top };
-
-      addComponent(type, position);
-    },
-    [addComponent]
+  const memoizedEdges = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        animated: edge.id === selectedEdge?.id,
+        style: {
+          stroke: '#94a3b8',
+          strokeWidth: edge.id === selectedEdge?.id ? 3 : 2,
+        },
+      })),
+    [edges, selectedEdge]
   );
 
-  const handleSelectionStart = useCallback((event: React.MouseEvent) => {
-    // Only start selection with Shift key + mouse down on empty canvas
-    if (!event.shiftKey) return;
-    
-    const target = event.target as HTMLElement;
-    const isReactFlowPane = target.closest('.react-flow__pane') || 
-                          target.classList.contains('react-flow__pane') ||
-                          target.closest('.react-flow__renderer');
-    
-    // Don't start selection if clicking on nodes, handles, or other UI elements
-    const isNode = target.closest('.react-flow__node') || target.classList.contains('react-flow__node');
-    const isHandle = target.closest('.react-flow__handle') || target.classList.contains('react-flow__handle');
-    const isControl = target.closest('.react-flow__controls') || target.classList.contains('react-flow__controls');
-    const isMiniMap = target.closest('.react-flow__minimap') || target.classList.contains('react-flow__minimap');
-    const isPanel = target.closest('.react-flow__panel') || target.classList.contains('react-flow__panel');
-    
-    if (event.button === 0 && isReactFlowPane && !isNode && !isHandle && !isControl && !isMiniMap && !isPanel) {
-      event.preventDefault();
-      event.stopPropagation();
-      
-      const rect = event.currentTarget.getBoundingClientRect();
-      const startX = event.clientX - rect.left;
-      const startY = event.clientY - rect.top;
-      
-      setIsSelecting(true);
-      setSelectionBox({
-        startX,
-        startY,
-        endX: startX,
-        endY: startY,
-      });
-      setSelectedNode(null);
-      setSelectedNodes([]);
-    }
-  }, []);
-
-  const handleSelectionMove = useCallback((event: React.MouseEvent) => {
-    if (!isSelecting || !selectionBox) return;
-    
-    event.preventDefault();
-    
-    const rect = event.currentTarget.getBoundingClientRect();
-    const endX = event.clientX - rect.left;
-    const endY = event.clientY - rect.top;
-    
-    setSelectionBox(prev => prev ? {
-      ...prev,
-      endX,
-      endY,
-    } : null);
-  }, [isSelecting, selectionBox]);
-
-  const handleSelectionEnd = useCallback((event: React.MouseEvent) => {
-    if (!isSelecting || !selectionBox) {
-      setIsSelecting(false);
-      setSelectionBox(null);
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Calculate selection bounds in screen coordinates
-    const left = Math.min(selectionBox.startX, selectionBox.endX);
-    const top = Math.min(selectionBox.startY, selectionBox.endY);
-    const right = Math.max(selectionBox.startX, selectionBox.endX);
-    const bottom = Math.max(selectionBox.startY, selectionBox.endY);
-
-    // Get the current viewport transform from ReactFlow
-    const viewport = reactFlowRef.current?.getViewport();
-
-    // Find nodes within selection bounds
-    const selectedNodeIds = nodes.filter(node => {
-      // Convert node position to screen coordinates
-      const nodeScreenX = node.position.x * (viewport?.zoom || 1) + (viewport?.x || 0);
-      const nodeScreenY = node.position.y * (viewport?.zoom || 1) + (viewport?.y || 0);
-      const nodeWidth = 160 * (viewport?.zoom || 1);
-      const nodeHeight = 100 * (viewport?.zoom || 1);
-      
-      // Check if node intersects with selection box
-      const nodeLeft = nodeScreenX;
-      const nodeRight = nodeScreenX + nodeWidth;
-      const nodeTop = nodeScreenY;
-      const nodeBottom = nodeScreenY + nodeHeight;
-      
-      const isSelected = nodeRight >= left && 
-                        nodeLeft <= right && 
-                        nodeBottom >= top && 
-                        nodeTop <= bottom;
-      
-      
-      return isSelected;
-    }).map(node => node.id);
-
-    setSelectedNodes(selectedNodeIds);
-    setIsSelecting(false);
-    setSelectionBox(null);
-  }, [isSelecting, selectionBox, nodes]);
-
-  const updateNode = useCallback(
-    (nodeId: string, updates: Partial<SimulationNodeData>) => {
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id === nodeId) {
-            const newData = { ...n.data };
-            if (updates.label !== undefined) newData.label = updates.label;
-            if (updates.config !== undefined) newData.config = { ...newData.config, ...updates.config };
-            if (updates.metrics !== undefined) newData.metrics = updates.metrics;
-            return { ...n, data: newData };
-          }
-          return n;
-        })
-      );
-      // Update selected node reference
-      if (selectedNode && selectedNode.id === nodeId) {
-        setSelectedNode((prev) => {
-          if (!prev) return prev;
-          const newData = { ...prev.data };
-          if (updates.label !== undefined) newData.label = updates.label;
-          if (updates.config !== undefined) newData.config = { ...newData.config, ...updates.config };
-          if (updates.metrics !== undefined) newData.metrics = updates.metrics;
-          return { ...prev, data: newData };
-        });
-      }
-    },
-    [setNodes, selectedNode]
-  );
-
-  const deleteNode = useCallback(
-    (nodeId: string) => {
-      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
-      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
-      if (selectedNode?.id === nodeId) {
-        setSelectedNode(null);
-      }
-      setSelectedNodes(prev => prev.filter(id => id !== nodeId));
-    },
-    [setNodes, setEdges, selectedNode]
-  );
-
-  const stopSimulation = useCallback(() => {
-    if (simIntervalRef.current) {
-      clearInterval(simIntervalRef.current);
-      simIntervalRef.current = null;
-    }
-    setIsRunning(false);
-    setSimProgress(null);
-  }, []);
-
-  const handleRunSimulation = useCallback(() => {
-    stopSimulation();
-    setIsRunning(true);
-    setSimulationResult(null);
-    setLiveTimeSeries([]);
-    setSimProgress({ elapsed: 0, total: simulationParams.simulationDurationSeconds });
-    setRightTab('report');
-
-    const ctx = prepareSimulation(nodes, edges, simulationParams);
-    simContextRef.current = ctx;
-    simTickRef.current = { second: 0, series: [] };
-
-    // Apply static node metrics immediately so canvas updates
-    setNodes((nds) =>
-      nds.map((n) => ({
-        ...n,
-        data: { ...n.data, metrics: ctx.nodeMetrics[n.id] || undefined },
-      }))
-    );
-
-    simIntervalRef.current = setInterval(() => {
-      const { second, series } = simTickRef.current;
-      const duration = simulationParams.simulationDurationSeconds;
-
-      const point = simulateTick(ctx, second);
-      const newSeries = [...series, point];
-      simTickRef.current = { second: second + 1, series: newSeries };
-
-      setLiveTimeSeries(newSeries);
-      setSimProgress({ elapsed: second + 1, total: duration });
-
-      if (second + 1 >= duration) {
-        stopSimulation();
-        const result = finalizeSimulation(ctx, newSeries, simulationParams);
-        setSimulationResult(result);
-        setLiveTimeSeries([]);
-        setIsRunning(false);
-        setSimProgress(null);
-      }
-    }, 1000);
-  }, [nodes, edges, simulationParams, setNodes, stopSimulation]);
-
-  const handleReset = useCallback(() => {
-    setSimulationResult(null);
-    setNodes((nds) =>
-      nds.map((n) => ({
-        ...n,
-        data: { ...n.data, metrics: undefined },
-      }))
-    );
-  }, [setNodes]);
+  const leftPanel = useResizable(256, 180, 480, false);
+  const rightPanel = useResizable(288, 220, 560, true);
 
   const loadPreset = useCallback(
     (presetId: string | null) => {
@@ -515,11 +183,10 @@ export default function Simulator() {
       const preset = PRESETS.find((p) => p.id === presetId);
       if (!preset) return;
 
-      // Save state BEFORE loading preset
       saveToHistory();
 
-      setNodes(preset.nodes as Node<SimulationNodeData>[]);
-      setEdges(
+      simulatorState.setNodes(preset.nodes as Node<SimulationNodeData>[]);
+      simulatorState.setEdges(
         preset.edges.map((e: Edge) => ({
           ...e,
           style: { stroke: '#94a3b8', strokeWidth: 2 },
@@ -530,328 +197,22 @@ export default function Simulator() {
       setSelectedNode(null);
       setSelectedNodes([]);
 
-      // Save the loaded preset state to history after a short delay
       setTimeout(() => {
         saveToHistory();
       }, 100);
 
-      // Fit view after loading
       setTimeout(() => {
         reactFlowRef.current?.fitView({ padding: 0.2 });
       }, 100);
     },
-    [setNodes, setEdges, saveToHistory]
+    [simulatorState, saveToHistory, setSimulationParams, setSimulationResult, setSelectedNode, setSelectedNodes, reactFlowRef]
   );
-
-  // Undo functionality - using simple undo/redo system
-  const undo = useCallback(() => {
-    const prevState = undoRedoRef.current.undo();
-    if (prevState) {
-      // Clear all selections first
-      setSelectedNode(null);
-      setSelectedNodes([]);
-      setSelectedEdge(null);
-
-      // Restore the state directly
-      setNodes(prevState.nodes);
-      setEdges(prevState.edges);
-    }
-  }, []);
-
-  // Redo functionality - using simple undo/redo system
-  const redo = useCallback(() => {
-    const nextState = undoRedoRef.current.redo();
-    if (nextState) {
-      // Clear all selections first
-      setSelectedNode(null);
-      setSelectedNodes([]);
-      setSelectedEdge(null);
-
-      // Restore the state directly
-      setNodes(nextState.nodes);
-      setEdges(nextState.edges);
-    }
-  }, []);
-
-  // Copy functionality
-  const copy = useCallback(() => {
-    // Handle single node select
-    if (selectedNode && selectedNodes.length === 0) {
-      const nodesToCopy = nodes.filter(node => node.id === selectedNode.id);
-      const edgesToCopy = edges.filter(edge =>
-        edge.source === selectedNode.id || edge.target === selectedNode.id
-      );
-      setClipboard({ nodes: nodesToCopy, edges: edgesToCopy });
-      return;
-    }
-
-    // Handle multi-select
-    if (selectedNodes.length === 0) return;
-
-    const selectedNodeIds = new Set(selectedNodes);
-    const nodesToCopy = nodes.filter(node => selectedNodeIds.has(node.id));
-    const edgesToCopy = edges.filter(edge =>
-      selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target)
-    );
-
-    setClipboard({ nodes: nodesToCopy, edges: edgesToCopy });
-  }, [selectedNodes, selectedNode, nodes, edges]);
-
-  // Paste functionality
-  const paste = useCallback(() => {
-    if (!clipboard) return;
-    
-    // Create new IDs for copied nodes
-    const idMap: Record<string, string> = {};
-    const offsetX = 50;
-    const offsetY = 50;
-    
-    const newNodes = clipboard.nodes.map(node => {
-      const newId = `node_${++nodeIdCounter}_${Date.now()}`;
-      idMap[node.id] = newId;
-      
-      return {
-        ...node,
-        id: newId,
-        position: {
-          x: node.position.x + offsetX,
-          y: node.position.y + offsetY,
-        },
-      };
-    });
-    
-    const newEdges = clipboard.edges.map(edge => ({
-      ...edge,
-      id: `edge_${Date.now()}_${Math.random()}`,
-      source: idMap[edge.source] || edge.source,
-      target: idMap[edge.target] || edge.target,
-      style: { stroke: '#94a3b8', strokeWidth: 2 },
-    }));
-    
-    // Save state BEFORE pasting
-    saveToHistory();
-    
-    setNodes(prev => [...prev, ...newNodes]);
-    setEdges(prev => [...prev, ...newEdges]);
-    
-    // Select the newly pasted nodes
-    const pastedNodeIds = newNodes.map(node => node.id);
-    setSelectedNodes(pastedNodeIds);
-    
-  }, [clipboard, saveToHistory]);
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Escape to clear selection
-      if (event.key === 'Escape') {
-        setSelectedNode(null);
-        setSelectedNodes([]);
-        setSelectedEdge(null);
-        return;
-      }
-
-      // Delete or Backspace to delete selected nodes
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        // Handle multi-select
-        if (selectedNodes.length > 0) {
-          event.preventDefault();
-
-          // Save state BEFORE deleting
-          saveToHistory();
-
-          // Batch delete all selected nodes at once
-          setNodes((nds) => nds.filter((n) => !selectedNodes.includes(n.id)));
-          setEdges((eds) => eds.filter((e) => !selectedNodes.includes(e.source) && !selectedNodes.includes(e.target)));
-
-          // Clear all selections
-          setSelectedNode(null);
-          setSelectedNodes([]);
-          setSelectedEdge(null);
-          return;
-        }
-
-        // Handle single node select
-        if (selectedNode) {
-          event.preventDefault();
-
-          // Save state BEFORE deleting
-          saveToHistory();
-
-          // Delete the single selected node
-          setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
-          setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
-
-          // Clear selections
-          setSelectedNode(null);
-          setSelectedNodes([]);
-          setSelectedEdge(null);
-          return;
-        }
-
-        // Handle single edge select
-        if (selectedEdge) {
-          event.preventDefault();
-
-          // Save state BEFORE deleting
-          saveToHistory();
-
-          // Delete the selected edge
-          setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-
-          // Clear selections
-          setSelectedNode(null);
-          setSelectedNodes([]);
-          setSelectedEdge(null);
-          return;
-        }
-      }
-
-      // Ctrl+A to select all nodes
-      if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        const allNodeIds = nodes.map(n => n.id);
-        setSelectedNodes(allNodeIds);
-        setSelectedNode(null);
-        return;
-      }
-
-      // Ctrl+Z or Cmd+Z to undo
-      if (event.key === 'z' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
-        event.preventDefault();
-        undo();
-        return;
-      }
-
-      // Ctrl+Shift+Z or Cmd+Shift+Z to redo
-      if (event.key === 'z' && (event.ctrlKey || event.metaKey) && event.shiftKey) {
-        event.preventDefault();
-        redo();
-        return;
-      }
-
-      // Ctrl+Y or Cmd+Y to redo (alternative)
-      if (event.key === 'y' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        redo();
-        return;
-      }
-
-      // Ctrl+C or Cmd+C to copy
-      if (event.key === 'c' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        copy();
-        return;
-      }
-
-      // Ctrl+V or Cmd+V to paste
-      if (event.key === 'v' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        paste();
-        return;
-      }
-
-      // Ctrl+X or Cmd+X to cut
-      if (event.key === 'x' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        // Handle single node select
-        if (selectedNode && selectedNodes.length === 0) {
-          copy();
-          // Save state before cutting
-          saveToHistory();
-          setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
-          setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
-          setSelectedNode(null);
-          setSelectedNodes([]);
-          setSelectedEdge(null);
-          return;
-        }
-
-        // Handle multi-select
-        if (selectedNodes.length > 0) {
-          copy();
-          // Save state before cutting
-          saveToHistory();
-          setNodes((nds) => nds.filter((n) => !selectedNodes.includes(n.id)));
-          setEdges((eds) => eds.filter((e) => !selectedNodes.includes(e.source) && !selectedNodes.includes(e.target)));
-          setSelectedNode(null);
-          setSelectedNodes([]);
-          setSelectedEdge(null);
-          return;
-        }
-        return;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodes, selectedNode, nodes, deleteNode, saveToHistory, undo, redo, copy, paste]);
-
-  // Initialize history system when hydrated
-  useEffect(() => {
-    if (hydrated) {
-      saveToHistory();
-    }
-  }, [hydrated, saveToHistory]);
-
-  
-  // Handle group movement
-  useEffect(() => {
-    if (selectedNodes.length === 0) return;
-
-    const handleNodeDrag = (event: any) => {
-      // This will be handled by ReactFlow's built-in drag functionality
-      // since we're marking nodes as selected
-    };
-
-    // ReactFlow will handle the group movement automatically when nodes are marked as selected
-  }, [selectedNodes]);
-
-  const selectedNodeForPanel = useMemo(() => {
-    if (!selectedNode) return null;
-    return nodes.find((n) => n.id === selectedNode.id) || null;
-  }, [selectedNode, nodes]);
-
-  // Memoize nodes to prevent infinite re-renders
-  const memoizedNodes = useMemo(() => 
-    nodes.map((n) => ({
-      ...n,
-      data: { 
-        ...n.data, 
-        highlighted: n.id === highlightedNodeId,
-        isMultiSelected: selectedNodes.includes(n.id)
-      },
-      className: [
-        n.id === selectedNode?.id ? 'selected-node' : '',
-        selectedNodes.includes(n.id) ? 'multi-selected-node' : ''
-      ].filter(Boolean).join(' '),
-      selected: selectedNodes.includes(n.id) || n.id === selectedNode?.id,
-    })), 
-    [nodes, highlightedNodeId, selectedNodes, selectedNode]
-  );
-
-  // Memoize edges to prevent infinite re-renders
-  const memoizedEdges = useMemo(() => 
-    edges.map((edge) => ({
-      ...edge,
-      animated: edge.id === selectedEdge?.id,
-      style: {
-        stroke: '#94a3b8',
-        strokeWidth: edge.id === selectedEdge?.id ? 3 : 2,
-      },
-    })), 
-    [edges, selectedEdge]
-  );
-
-  const leftPanel = useResizable(256, 180, 480, false);
-  const rightPanel = useResizable(288, 220, 560, true);
 
   const handleSaveDesign = useCallback(async () => {
     const token = localStorage.getItem('token');
 
-    // Not logged in
     if (!token) {
-      openAuth(); // opens login modal
+      openAuth();
       return;
     }
 
@@ -1059,7 +420,7 @@ export default function Simulator() {
             multiSelectionKeyCode="Shift"
             onMouseDown={handleSelectionStart}
             onMouseMove={handleSelectionMove}
-            onMouseUp={handleSelectionEnd}
+            onMouseUp={(e) => handleSelectionEnd(e, setSelectedNodes)}
             onInit={(instance) => { reactFlowRef.current = instance as unknown as ReactFlowInstance<Node<SimulationNodeData>, Edge>; }}
             nodeTypes={nodeTypes}
             fitView
