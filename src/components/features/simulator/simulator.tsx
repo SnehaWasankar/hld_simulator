@@ -125,6 +125,24 @@ const DEFAULT_PARAMS: SimulationParams = {
   spikeIntensity: 3,
 };
 
+function getUserColor(seed: string) {
+  const colors = [
+    { bg: 'bg-blue-500/20', text: 'text-blue-800', border: 'border-blue-200', hover: 'hover:bg-blue-500/10 hover:border-blue-400' },
+    { bg: 'bg-pink-500/20', text: 'text-pink-800', border: 'border-pink-200', hover: 'hover:bg-pink-500/10 hover:border-pink-400' },
+    { bg: 'bg-green-500/20', text: 'text-green-800', border: 'border-green-200', hover: 'hover:bg-green-500/10 hover:border-green-400' },
+    { bg: 'bg-purple-500/20', text: 'text-purple-800', border: 'border-purple-200', hover: 'hover:bg-purple-500/10 hover:border-purple-400' },
+    { bg: 'bg-orange-500/20', text: 'text-orange-800', border: 'border-orange-200', hover: 'hover:bg-orange-500/10 hover:border-orange-400' },
+  ];
+
+  // simple hash from email
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return colors[Math.abs(hash) % colors.length];
+}
+
 export default function Simulator() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<SimulationNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -153,6 +171,8 @@ export default function Simulator() {
 
   const { user, openAuth, logout } = useAuth();
   const [open, setOpen] = useState(false);  
+
+  const color = user ? getUserColor(user.email) : null;
 
   // Restore from localStorage after first client-side mount (avoids SSR mismatch)
   useEffect(() => {
@@ -921,19 +941,34 @@ export default function Simulator() {
             <div className="relative">
               <div
                 onClick={() => setOpen(!open)}
-                className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center cursor-pointer font-semibold"
+                // className="w-8 h-8 rounded-full 
+                // bg-pink-500/20 text-pink-800 border border-pink-200
+                // hover:bg-pink-500/10 hover:border-pink-400
+                // flex items-center justify-center 
+                // cursor-pointer font-semibold 
+                // transition-all duration-200"
+                className={`w-8 h-8 rounded-full 
+                ${color?.bg} ${color?.text} border ${color?.border}
+                ${color?.hover}
+                flex items-center justify-center 
+                cursor-pointer font-semibold 
+                transition-all duration-200`}
               >
                 {user.email[0].toUpperCase()}
               </div>
 
               {open && (
-                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-md">
+                <div className="absolute right-0 mt-2 bg-white border rounded-md shadow-md">
                   <button
                     onClick={() => {
                       logout();
                       setOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                    className="inline-block px-3 py-1.5 text-red-700 
+                    bg-red-500/10 border border-red-200
+                    hover:bg-red-500/20 hover:border-red-400
+                    transition-all duration-200 text-sm
+                    rounded-md"
                   >
                     Logout
                   </button>
