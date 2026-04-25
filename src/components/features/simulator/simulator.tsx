@@ -31,7 +31,6 @@ import ComponentPalette from '@/components/features/architecture/component-palet
 import ConfigPanel from '@/components/features/simulator/config-panel';
 import SimulationControls from '@/components/features/simulator/simulation-controls';
 import ReportPanel from '@/components/features/analytics/report-panel';
-import LiveClientPanel from '@/components/features/analytics/live-client-panel';
 import SelectionBox from '@/components/features/architecture/selection-box';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,8 +51,9 @@ import {
   BarChart3,
   Boxes,
   Network,
-  Zap,
   BookOpen,
+  Minus,
+  Map,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth';
 
@@ -166,6 +166,7 @@ export default function Simulator() {
   const simTickRef = useRef<{ second: number; series: TimeSeriesDataPoint[] }>({ second: 0, series: [] });
   const [rightTab, setRightTab] = useState('components');
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+  const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
   const reactFlowRef = useRef<ReactFlowInstance<Node<SimulationNodeData>, Edge> | null>(null);
 
   const { user, openAuth, logout } = useAuth();
@@ -601,13 +602,13 @@ export default function Simulator() {
     if (!clipboard) return;
     
     // Create new IDs for copied nodes
-    const idMap = new Map<string, string>();
+    const idMap: Record<string, string> = {};
     const offsetX = 50;
     const offsetY = 50;
     
     const newNodes = clipboard.nodes.map(node => {
       const newId = `node_${++nodeIdCounter}_${Date.now()}`;
-      idMap.set(node.id, newId);
+      idMap[node.id] = newId;
       
       return {
         ...node,
@@ -622,8 +623,8 @@ export default function Simulator() {
     const newEdges = clipboard.edges.map(edge => ({
       ...edge,
       id: `edge_${Date.now()}_${Math.random()}`,
-      source: idMap.get(edge.source) || edge.source,
-      target: idMap.get(edge.target) || edge.target,
+      source: idMap[edge.source] || edge.source,
+      target: idMap[edge.target] || edge.target,
       style: { stroke: '#94a3b8', strokeWidth: 2 },
     }));
     
@@ -1033,6 +1034,16 @@ export default function Simulator() {
               Save Design
             </Button>
           </div>
+          {!isMinimapCollapsed && (
+            <div
+              onClick={() => setIsMinimapCollapsed(true)}
+              className="w-4 h-4 bg-white border-2 border-gray-300 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all cursor-pointer"
+              style={{ position: 'absolute', bottom: '172px', right: '25px', zIndex: 9999 }}
+              title="Collapse minimap"
+            >
+              <Minus className="w-2 h-2 text-gray-700" />
+            </div>
+          )}
           <ReactFlow
             nodes={memoizedNodes}
             edges={memoizedEdges}
@@ -1061,14 +1072,27 @@ export default function Simulator() {
           >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#d1d5db" />
             <Controls className="!bg-white !border !shadow-md !rounded-lg" />
-            <MiniMap
-              nodeColor={(node) => {
-                const data = node.data as SimulationNodeData;
-                return COMPONENT_COLORS[data.componentType] || '#6366f1';
-              }}
-              className="!bg-white !border !shadow-md !rounded-lg"
-              maskColor="rgba(0,0,0,0.05)"
-            />
+            {!isMinimapCollapsed && (
+              <Panel position="bottom-right" className="!p-0">
+                <MiniMap
+                  nodeColor={(node) => {
+                    const data = node.data as SimulationNodeData;
+                    return COMPONENT_COLORS[data.componentType] || '#6366f1';
+                  }}
+                  className="!bg-white !border !shadow-md !rounded-lg"
+                />
+              </Panel>
+            )}
+            {isMinimapCollapsed && (
+              <Panel position="bottom-right" className="!p-0">
+                <button
+                  onClick={() => setIsMinimapCollapsed(false)}
+                  className="w-10 h-10 bg-white border border-gray-300 rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
+                >
+                  <Map className="w-5 h-5 text-gray-600" />
+                </button>
+              </Panel>
+            )}
             <Panel position="top-left" className="flex flex-col gap-2">
               <Badge variant="outline" className="text-[10px]">
                 {nodes.length} components
@@ -1119,14 +1143,10 @@ export default function Simulator() {
         {/* Right Sidebar */}
         <div className="border-l bg-white flex flex-col flex-shrink-0" style={{ width: rightPanel.size }}>
           <Tabs value={rightTab} onValueChange={(val) => setRightTab(val as string)} className="flex flex-col h-full">
-            <TabsList className="flex-shrink-0 m-2 grid grid-cols-4">
+            <TabsList className="flex-shrink-0 m-2 grid grid-cols-3 w-full">
               <TabsTrigger value="components" className="text-xs gap-1">
                 <LayoutGrid className="w-3 h-3" />
                 Add
-              </TabsTrigger>
-              <TabsTrigger value="live" className="text-xs gap-1">
-                <Zap className="w-3 h-3" />
-                Live
               </TabsTrigger>
               <TabsTrigger value="config" className="text-xs gap-1">
                 <Settings2 className="w-3 h-3" />
@@ -1145,13 +1165,6 @@ export default function Simulator() {
               </div>
             </TabsContent>
 
-            <TabsContent value="live" className="flex-1 overflow-hidden m-0 min-h-0">
-              <LiveClientPanel
-                nodes={nodes}
-                edges={edges}
-                onHighlightNode={setHighlightedNodeId}
-              />
-            </TabsContent>
 
             <TabsContent value="config" className="flex-1 overflow-hidden m-0">
               <ScrollArea className="h-full">

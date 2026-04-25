@@ -17,6 +17,7 @@ import {
   XCircle,
   ShieldAlert,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface ReportPanelProps {
   result: SimulationResult | null;
@@ -236,35 +237,48 @@ export default function ReportPanel({ result, liveTimeSeries = [], isRunning = f
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Latency Breakdown (Critical Path)
             </h3>
-            <div className="space-y-2">
-              {result.latencyBreakdown.map((item) => (
-                <div key={item.nodeId} className="flex items-center gap-2">
-                  <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: COMPONENT_COLORS[item.componentType] }}
+            <div className="w-full h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                  <Pie
+                    data={result.latencyBreakdown.map(item => ({
+                      name: item.nodeLabel,
+                      value: item.avgLatencyMs,
+                      percent: item.percentOfTotal,
+                      color: COMPONENT_COLORS[item.componentType],
+                    }))}
+                    cx="50%"
+                    cy="45%"
+                    innerRadius="40%"
+                    outerRadius="70%"
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {result.latencyBreakdown.map((item, index) => (
+                      <Cell key={`cell-${index}`} fill={COMPONENT_COLORS[item.componentType]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: any, name: any, props: any) => [
+                      formatLatency(value),
+                      name,
+                      `${props.payload?.percent?.toFixed(1)}%`,
+                    ]}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-700 truncate">{item.nodeLabel}</span>
-                      <span className="text-xs font-mono font-medium ml-2">
-                        {formatLatency(item.avgLatencyMs)}
+                  <Legend
+                    verticalAlign="bottom"
+                    align="center"
+                    layout="horizontal"
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '11px' }}
+                    formatter={(value: string, entry: any) => (
+                      <span className="text-xs">
+                        {value} ({entry.payload.percent.toFixed(1)}%)
                       </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${item.percentOfTotal}%`,
-                          backgroundColor: COMPONENT_COLORS[item.componentType],
-                        }}
-                      />
-                    </div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">
-                      {item.percentOfTotal.toFixed(1)}% of total
-                    </div>
-                  </div>
-                </div>
-              ))}
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}
