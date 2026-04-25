@@ -1,6 +1,8 @@
 import { verifyToken } from './jwt';
+import { JwtUser } from '../types/auth';
 
-export function getUserFromRequest(req: Request) {
+// JWT handler - extracts and verifies user from request
+export function getUserFromRequest(req: Request) :JwtUser | null {
   const authHeader = req.headers.get('authorization');
 
   if (!authHeader) return null;
@@ -9,7 +11,9 @@ export function getUserFromRequest(req: Request) {
 
   if (!token) return null;
 
-  const decoded = verifyToken(token);
-
-  return decoded; // { userId, email }
+  try {
+    return verifyToken(token); // { userId, email }
+  } catch {
+    return null;
+  }
 }
