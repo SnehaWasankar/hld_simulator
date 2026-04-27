@@ -21,12 +21,14 @@ import { useSimulation } from './hooks/useSimulation';
 import { useSelection } from './hooks/useSelection';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useNodeEvents } from './hooks/useNodeEvents';
+import { useDesigns } from '@/hooks/useDesigns';
+import SaveModal from './save-modal';
 
 export default function Simulator() {
   // Local State
   const [rightTab, setRightTab] = useState('components');
   const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
-  const [currentDesignId, setCurrentDesignId] = React.useState<string | null>(null);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
   // Custom Hooks - State Management
   const simulatorState = useSimulatorState();
@@ -55,6 +57,13 @@ export default function Simulator() {
     paste,
     saveToHistory,
   } = simulatorState;
+
+  const {
+    saveDesign,
+    loadDesign,
+    currentDesignId,
+    clearCurrentDesign
+  } = useDesigns(nodes, edges);
 
   // Custom Hooks - Simulation Logic
   const simulation = useSimulation(nodes, edges, simulationParams, setNodes);
@@ -186,62 +195,6 @@ export default function Simulator() {
     [simulatorState, saveToHistory, setSimulationParams, setSimulationResult, setSelectedNode, setSelectedNodes, reactFlowRef]
   );
 
-  const handleSaveDesign = useCallback(async () => {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      alert('Please login to save designs');
-      return;
-    }
-
-    const name = prompt('Enter design name');
-    if (!name) return;
-
-    let res;
-
-    if (currentDesignId) {
-      // Update existing
-      res = await fetch(`/api/designs/${currentDesignId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name,
-          nodes,
-          edges,
-        }),
-      });
-    } else {
-      // Create new
-      res = await fetch('/api/designs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name,
-          nodes,
-          edges,
-        }),
-      });
-
-      const data = await res.json();
-      setCurrentDesignId(data.design.id); // store new id
-    }
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    alert(currentDesignId ? 'Design updated!' : 'Design saved!');
-  }, [nodes, edges, currentDesignId]);
-
   const handleResetCanvas = useCallback(() => {
     const confirmReset = confirm('Clear entire canvas?');
 
@@ -251,21 +204,13 @@ export default function Simulator() {
     setEdges([]);
   }, [setNodes, setEdges]);
 
-  const handleLoadDesigns = useCallback((design: any) => {
-    if (!design) return;
-
-    setNodes(design.nodes);
-    setEdges(design.edges);
-    setCurrentDesignId(design.id);
-  }, [setNodes, setEdges]);
-
   // Render
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50">
       <SimulatorHeader
         selectedNodesCount={selectedNodes.length}
         loadPreset={loadPreset}
-        handleLoadDesigns={handleLoadDesigns}
+        handleLoadDesigns={(design) => loadDesign(design, setNodes, setEdges)}
       />
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Simulation Controls */}
@@ -317,7 +262,7 @@ export default function Simulator() {
           selectionBox={selectionBox}
           isMinimapCollapsed={isMinimapCollapsed}
           setIsMinimapCollapsed={setIsMinimapCollapsed}
-          handleSaveDesign={handleSaveDesign}
+          handleSaveDesign={() => setIsSaveModalOpen(true)}
           handleResetCanvas={handleResetCanvas}
           loadPreset={loadPreset}
         />
@@ -349,6 +294,16 @@ export default function Simulator() {
           handleFastForward={handleFastForward}
         />
       </div>
+      <SaveModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onUpdate={saveDesign}
+        onSaveAsNew={() => {
+          clearCurrentDesign();
+          saveDesign();
+        }}
+        hasExisting={!!currentDesignId}
+      />
     </div>
   );
 }
