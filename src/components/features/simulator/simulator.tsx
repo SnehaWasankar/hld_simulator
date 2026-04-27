@@ -26,6 +26,7 @@ export default function Simulator() {
   // Local State
   const [rightTab, setRightTab] = useState('components');
   const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
+  const [currentDesignId, setCurrentDesignId] = React.useState<string | null>(null);
 
   // Custom Hooks - State Management
   const simulatorState = useSimulatorState();
@@ -196,18 +197,40 @@ export default function Simulator() {
     const name = prompt('Enter design name');
     if (!name) return;
 
-    const res = await fetch('/api/designs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        name,
-        nodes,
-        edges,
-      }),
-    });
+    let res;
+
+    if (currentDesignId) {
+      // Update existing
+      res = await fetch(`/api/designs/${currentDesignId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name,
+          nodes,
+          edges,
+        }),
+      });
+    } else {
+      // Create new
+      res = await fetch('/api/designs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name,
+          nodes,
+          edges,
+        }),
+      });
+
+      const data = await res.json();
+      setCurrentDesignId(data.design.id); // store new id
+    }
 
     const data = await res.json();
 
@@ -216,8 +239,8 @@ export default function Simulator() {
       return;
     }
 
-    alert('Design saved to DB!');
-  }, [nodes, edges]);
+    alert(currentDesignId ? 'Design updated!' : 'Design saved!');
+  }, [nodes, edges, currentDesignId]);
 
   const handleResetCanvas = useCallback(() => {
     const confirmReset = confirm('Clear entire canvas?');
@@ -233,6 +256,7 @@ export default function Simulator() {
 
     setNodes(design.nodes);
     setEdges(design.edges);
+    setCurrentDesignId(design.id);
   }, [setNodes, setEdges]);
 
   // Render
@@ -245,7 +269,7 @@ export default function Simulator() {
       />
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Simulation Controls */}
-        <div className="border-r bg-white flex flex-col flex-shrink-0" style={{ width: leftPanel.size }}>
+        <div className="border-r bg-white flex flex-col shrink-0" style={{ width: leftPanel.size }}>
           <div className="p-3 overflow-y-auto flex-1">
             <SimulationControls
               params={simulationParams}
@@ -263,7 +287,7 @@ export default function Simulator() {
         {/* Left Resize Handle */}
         <div
           onMouseDown={leftPanel.onMouseDown}
-          className="w-1.5 flex-shrink-0 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors relative z-10 group"
+          className="w-1.5 shrink-0 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors relative z-10 group"
           style={{ touchAction: 'none' }}
         >
           <div className="absolute inset-y-0 -left-2 -right-2" />
@@ -301,7 +325,7 @@ export default function Simulator() {
         {/* Right Resize Handle */}
         <div
           onMouseDown={rightPanel.onMouseDown}
-          className="w-1.5 flex-shrink-0 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors relative z-10 group"
+          className="w-1.5 shrink-0 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors relative z-10 group"
           style={{ touchAction: 'none' }}
         >
           <div className="absolute inset-y-0 -left-2 -right-2" />
