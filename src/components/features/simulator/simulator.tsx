@@ -10,11 +10,15 @@ import '@xyflow/react/dist/style.css';
 import { SimulationNodeData } from '@/types';
 import { PRESETS } from '@/data';
 
+// UI COMPONENTS 
 import SimulationControls from '@/components/features/simulator/simulation-controls';
 import SimulatorHeader from './simulator-header';
 import DiagramCanvas from './diagram-canvas';
 import RightSidebar from './right-sidebar';
+import SaveModal from './save-modal';
+import CanvasTopBar from './canvas-topbar';
 
+// CUSTOM HOOKS
 import { useResizable } from './hooks/useResizable';
 import { useSimulatorState } from './hooks/useSimulatorState';
 import { useSimulation } from './hooks/useSimulation';
@@ -22,16 +26,15 @@ import { useSelection } from './hooks/useSelection';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useNodeEvents } from './hooks/useNodeEvents';
 import { useDesigns } from '@/hooks/useDesigns';
-import SaveModal from './save-modal';
-import CanvasTopBar from './canvas-topbar';
 
 export default function Simulator() {
-  // Local State
+
+  // LOCAL UI STATE 
   const [rightTab, setRightTab] = useState('components');
   const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
-  // Custom Hooks - State Management
+  // CORE SIMULATOR STATE 
   const simulatorState = useSimulatorState();
   const {
     nodes,
@@ -59,6 +62,7 @@ export default function Simulator() {
     saveToHistory,
   } = simulatorState;
 
+  // DESIGN STORAGE (SAVE / LOAD) 
   const {
     saveDesign,
     loadDesign,
@@ -66,7 +70,7 @@ export default function Simulator() {
     clearCurrentDesign
   } = useDesigns(nodes, edges);
 
-  // Custom Hooks - Simulation Logic
+  // SIMULATION ENGINE 
   const simulation = useSimulation(nodes, edges, simulationParams, setNodes);
   const {
     simulationResult,
@@ -80,17 +84,18 @@ export default function Simulator() {
     handleFastForward,
   } = simulation;
 
-  // Switch to report tab when simulation starts
+  // SIDE EFFECTS 
   useEffect(() => {
     if (isRunning) {
       setRightTab('report');
     }
   }, [isRunning, setRightTab]);
 
-  // Custom Hooks - Selection & Events
+  // SELECTION SYSTEM 
   const selection = useSelection(nodes, reactFlowRef);
   const { isSelecting, selectionBox, handleSelectionStart, handleSelectionMove, handleSelectionEnd } = selection;
 
+  // NODE / EDGE EVENTS 
   const nodeEvents = useNodeEvents({
     selectedNodes,
     setSelectedNode,
@@ -104,7 +109,7 @@ export default function Simulator() {
   });
   const { onNodeClick, onPaneClick, onEdgeClick, onConnect, onDragOver, onDrop } = nodeEvents;
 
-  // Custom Hooks - Keyboard Shortcuts
+  // KEYBOARD SHORTCUTS 
   useKeyboardShortcuts({
     selectedNodes,
     selectedNode,
@@ -122,7 +127,7 @@ export default function Simulator() {
     setSelectedEdge,
   });
 
-  // Memoized Values
+  // DERIVED / MEMOIZED DATA 
   const selectedNodeForPanel = useMemo(() => {
     if (!selectedNode) return null;
     return nodes.find((n) => n.id === selectedNode.id) || null;
@@ -160,11 +165,11 @@ export default function Simulator() {
     [edges, selectedEdge]
   );
 
-  // Custom Hooks - Resizable Panels
+  // RESIZABLE PANELS 
   const leftPanel = useResizable(256, 180, 480, false);
   const rightPanel = useResizable(288, 220, 560, true);
 
-  // Event Handlers
+  // EVENT HANDLERS 
   const loadPreset = useCallback(
     (presetId: string | null) => {
       if (!presetId) return;
@@ -205,16 +210,20 @@ export default function Simulator() {
     setEdges([]);
   }, [setNodes, setEdges]);
 
-  // Render
+  // RENDER 
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50">
+
+      {/* HEADER */}
       <SimulatorHeader
         selectedNodesCount={selectedNodes.length}
         loadPreset={loadPreset}
         handleLoadDesigns={(design) => loadDesign(design, setNodes, setEdges)}
       />
+
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Simulation Controls */}
+
+        {/* LEFT PANEL (SIMULATION CONTROLS) */}
         <div className="border-r bg-white flex flex-col shrink-0" style={{ width: leftPanel.size }}>
           <div className="p-3 overflow-y-auto flex-1">
             <SimulationControls
@@ -230,7 +239,7 @@ export default function Simulator() {
           </div>
         </div>
 
-        {/* Left Resize Handle */}
+        {/* LEFT RESIZE HANDLE */}
         <div
           onMouseDown={leftPanel.onMouseDown}
           className="w-1.5 shrink-0 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors relative z-10 group"
@@ -277,7 +286,7 @@ export default function Simulator() {
           />
         </div>
 
-        {/* Right Resize Handle */}
+        {/* RIGHT RESIZE HANDLE */}
         <div
           onMouseDown={rightPanel.onMouseDown}
           className="w-1.5 shrink-0 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors relative z-10 group"
@@ -290,6 +299,7 @@ export default function Simulator() {
           </div>
         </div>
 
+        {/* RIGHT PANEL */}
         <RightSidebar
           rightTab={rightTab}
           setRightTab={setRightTab}
@@ -304,6 +314,8 @@ export default function Simulator() {
           handleFastForward={handleFastForward}
         />
       </div>
+
+      {/* SAVE MODAL */}
       <SaveModal
         isOpen={isSaveModalOpen}
         onClose={() => setIsSaveModalOpen(false)}
@@ -314,6 +326,7 @@ export default function Simulator() {
         }}
         hasExisting={!!currentDesignId}
       />
+
     </div>
   );
 }
