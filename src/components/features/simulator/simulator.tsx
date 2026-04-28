@@ -23,6 +23,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useNodeEvents } from './hooks/useNodeEvents';
 import { useDesigns } from '@/hooks/useDesigns';
 import SaveModal from './save-modal';
+import CanvasTopBar from './canvas-topbar';
 
 export default function Simulator() {
   // Local State
@@ -242,30 +243,39 @@ export default function Simulator() {
           </div>
         </div>
 
-        <DiagramCanvas
-          nodes={memoizedNodes}
-          edges={memoizedEdges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          onEdgeClick={onEdgeClick}
-          onPaneClick={onPaneClick}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          reactFlowRef={reactFlowRef}
-          handleSelectionStart={handleSelectionStart}
-          handleSelectionMove={handleSelectionMove}
-          handleSelectionEnd={handleSelectionEnd}
-          setSelectedNodes={setSelectedNodes}
-          isSelecting={isSelecting}
-          selectionBox={selectionBox}
-          isMinimapCollapsed={isMinimapCollapsed}
-          setIsMinimapCollapsed={setIsMinimapCollapsed}
-          handleSaveDesign={() => setIsSaveModalOpen(true)}
-          handleResetCanvas={handleResetCanvas}
-          loadPreset={loadPreset}
-        />
+        {/* CENTER AREA */}
+        <div className="flex-1 flex flex-col">
+
+          {/* TOP BAR */}
+          <CanvasTopBar
+            loadPreset={loadPreset}
+            onSave={() => setIsSaveModalOpen(true)}
+            onReset={handleResetCanvas}
+          />
+
+          {/* CANVAS */}
+          <DiagramCanvas
+            nodes={memoizedNodes}
+            edges={memoizedEdges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
+            onPaneClick={onPaneClick}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            reactFlowRef={reactFlowRef}
+            handleSelectionStart={handleSelectionStart}
+            handleSelectionMove={handleSelectionMove}
+            handleSelectionEnd={handleSelectionEnd}
+            setSelectedNodes={setSelectedNodes}
+            isSelecting={isSelecting}
+            selectionBox={selectionBox}
+            isMinimapCollapsed={isMinimapCollapsed}
+            setIsMinimapCollapsed={setIsMinimapCollapsed}
+          />
+        </div>
 
         {/* Right Resize Handle */}
         <div
