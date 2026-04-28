@@ -81,10 +81,6 @@ export default function SimulatorHeader({ selectedNodesCount, loadPreset, handle
         <Link href="/guide">
           <Button
             size="sm"
-            // className="gap-2 
-            // bg-teal-500/20 text-teal-800 border border-teal-200
-            // hover:bg-teal-500/10 hover:border-teal-400
-            // font-medium transition-all duration-200"
             className="bg-purple-500/20 text-purple-800 border border-purple-200 
             hover:bg-purple-500/10 hover:border-purple-400
             font-medium transition-all duration-200"

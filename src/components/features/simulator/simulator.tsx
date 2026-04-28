@@ -24,12 +24,15 @@ import { useNodeEvents } from './hooks/useNodeEvents';
 import { useDesigns } from '@/hooks/useDesigns';
 import SaveModal from './save-modal';
 import CanvasTopBar from './canvas-topbar';
+import SimulationTopBar from './simulation-topbar';
 
 export default function Simulator() {
   // Local State
   const [rightTab, setRightTab] = useState('components');
   const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [currentDesignName, setCurrentDesignName] = useState<string | null>(null);
+  
 
   // Custom Hooks - State Management
   const simulatorState = useSimulatorState();
@@ -211,22 +214,33 @@ export default function Simulator() {
       <SimulatorHeader
         selectedNodesCount={selectedNodes.length}
         loadPreset={loadPreset}
-        handleLoadDesigns={(design) => loadDesign(design, setNodes, setEdges)}
+        handleLoadDesigns={(design) => {
+          loadDesign(design, setNodes, setEdges);
+          setCurrentDesignName(design.name);
+        }}
       />
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Simulation Controls */}
         <div className="border-r bg-white flex flex-col shrink-0" style={{ width: leftPanel.size }}>
-          <div className="p-3 overflow-y-auto flex-1">
-            <SimulationControls
-              params={simulationParams}
-              onParamsChange={setSimulationParams}
-              onRun={handleRunSimulation}
-              onStop={stopSimulation}
-              onReset={handleReset}
-              isRunning={isRunning}
-              hasResults={!!simulationResult}
-              simProgress={simProgress}
-            />
+          <div className="flex flex-col h-full">
+
+            {/* TOP BAR (no padding) */}
+            <SimulationTopBar selectedDesignName={currentDesignName} />
+
+            {/* CONTENT (with padding + scroll) */}
+            <div className="p-3 overflow-y-auto flex-1">
+              <SimulationControls
+                params={simulationParams}
+                onParamsChange={setSimulationParams}
+                onRun={handleRunSimulation}
+                onStop={stopSimulation}
+                onReset={handleReset}
+                isRunning={isRunning}
+                hasResults={!!simulationResult}
+                simProgress={simProgress}
+                selectedDesignName={currentDesignName}
+              />
+            </div>
           </div>
         </div>
 
