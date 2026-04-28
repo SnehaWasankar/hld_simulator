@@ -79,7 +79,6 @@ export default function DiagramCanvas({
   handleResetCanvas,
   loadPreset
 }: DiagramCanvasProps) {
-  const [selectedPresetName, setSelectedPresetName] = React.useState<string | null>(null);
   return (
     <div className="flex-1 relative z-0">
       <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -164,20 +163,7 @@ export default function DiagramCanvas({
           </Panel>
         )}
         <Panel position="top-left">
-          {/* <Select onValueChange={loadPreset}> */}
-          <Select
-            onValueChange={(id: string | null) => {
-              const preset = PRESETS.find((p) => p.id === id);
-              setSelectedPresetName(preset?.name || null);
-              loadPreset(id);
-            }}
-          >
-            {/* <SelectTrigger
-              className="h-8 text-xs
-              bg-indigo-500/20 text-indigo-900 border border-indigo-200
-              hover:bg-indigo-500/10 hover:border-indigo-400
-              transition-all duration-200"
-            > */}
+          <Select onValueChange={loadPreset}>
             <SelectTrigger
               className="h-8 text-xs px-3
               bg-pink-500/20 text-pink-800 border border-pink-200
@@ -187,11 +173,6 @@ export default function DiagramCanvas({
               {/* <SelectValue placeholder="Presets" /> */}
               <span className="flex items-center gap-1">
                 <span className="font-medium">Presets</span>
-                {selectedPresetName && (
-                  <span className="text-indigo-700/60 truncate max-w-25">
-                    – {selectedPresetName}
-                  </span>
-                )}
               </span>
             </SelectTrigger>
 
