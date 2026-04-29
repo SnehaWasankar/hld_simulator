@@ -231,7 +231,7 @@ export default function Simulator() {
           <div className="flex flex-col h-full">
 
             {/* TOP BAR (no padding) */}
-            <SimulationTopBar selectedDesignName={currentDesignName} />
+            <SimulationTopBar />
 
             {/* CONTENT (with padding + scroll) */}
             <div className="p-3 overflow-y-auto flex-1">
@@ -271,6 +271,7 @@ export default function Simulator() {
             loadPreset={loadPreset}
             onSave={() => setIsSaveModalOpen(true)}
             onReset={handleResetCanvas}
+            selectedDesignName={currentDesignName}
           />
 
           {/* CANVAS */}
