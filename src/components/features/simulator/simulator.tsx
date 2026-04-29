@@ -230,8 +230,13 @@ export default function Simulator() {
         <div className="border-r bg-white flex flex-col shrink-0" style={{ width: leftPanel.size }}>
           <div className="flex flex-col h-full">
 
-            {/* TOP BAR (no padding) */}
-            <SimulationTopBar />
+            {/* TOP BAR */}
+            <SimulationTopBar
+              onRun={handleRunSimulation}
+              onStop={stopSimulation}
+              onReset={handleReset}
+              isRunning={isRunning}
+            />
 
             {/* CONTENT (with padding + scroll) */}
             <div className="p-3 overflow-y-auto flex-1">
