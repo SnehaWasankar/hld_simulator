@@ -67,7 +67,7 @@ export default function CanvasTopBar({ loadPreset, onSave, onReset }: Props) {
         hover:bg-green-500/30 hover:border-green-400
         font-medium transition-all duration-200"
         >
-        Save Design
+        Save
         </Button>
 
         <Button

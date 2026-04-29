@@ -174,6 +174,8 @@ export default function Simulator() {
       const preset = PRESETS.find((p) => p.id === presetId);
       if (!preset) return;
 
+      setCurrentDesignName(preset.name);
+
       saveToHistory();
 
       simulatorState.setNodes(preset.nodes as Node<SimulationNodeData>[]);
@@ -206,6 +208,10 @@ export default function Simulator() {
 
     setNodes([]);
     setEdges([]);
+
+    // Clear both UI label and loaded design context
+    setCurrentDesignName(null);
+    clearCurrentDesign();
   }, [setNodes, setEdges]);
 
   // Render
