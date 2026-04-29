@@ -24,12 +24,15 @@ import { useNodeEvents } from './hooks/useNodeEvents';
 import { useDesigns } from '@/hooks/useDesigns';
 import SaveModal from './save-modal';
 import CanvasTopBar from './canvas-topbar';
+import SimulationTopBar from './simulation-topbar';
 
 export default function Simulator() {
   // Local State
   const [rightTab, setRightTab] = useState('components');
   const [isMinimapCollapsed, setIsMinimapCollapsed] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [currentDesignName, setCurrentDesignName] = useState<string | null>(null);
+  
 
   // Custom Hooks - State Management
   const simulatorState = useSimulatorState();
@@ -171,6 +174,8 @@ export default function Simulator() {
       const preset = PRESETS.find((p) => p.id === presetId);
       if (!preset) return;
 
+      setCurrentDesignName(preset.name);
+
       saveToHistory();
 
       simulatorState.setNodes(preset.nodes as Node<SimulationNodeData>[]);
@@ -203,6 +208,10 @@ export default function Simulator() {
 
     setNodes([]);
     setEdges([]);
+
+    // Clear both UI label and loaded design context
+    setCurrentDesignName(null);
+    clearCurrentDesign();
   }, [setNodes, setEdges]);
 
   // Render
@@ -211,22 +220,38 @@ export default function Simulator() {
       <SimulatorHeader
         selectedNodesCount={selectedNodes.length}
         loadPreset={loadPreset}
-        handleLoadDesigns={(design) => loadDesign(design, setNodes, setEdges)}
+        handleLoadDesigns={(design) => {
+          loadDesign(design, setNodes, setEdges);
+          setCurrentDesignName(design.name);
+        }}
       />
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Simulation Controls */}
         <div className="border-r bg-white flex flex-col shrink-0" style={{ width: leftPanel.size }}>
-          <div className="p-3 overflow-y-auto flex-1">
-            <SimulationControls
-              params={simulationParams}
-              onParamsChange={setSimulationParams}
+          <div className="flex flex-col h-full">
+
+            {/* TOP BAR */}
+            <SimulationTopBar
               onRun={handleRunSimulation}
               onStop={stopSimulation}
               onReset={handleReset}
               isRunning={isRunning}
-              hasResults={!!simulationResult}
-              simProgress={simProgress}
             />
+
+            {/* CONTENT (with padding + scroll) */}
+            <div className="p-3 overflow-y-auto flex-1">
+              <SimulationControls
+                params={simulationParams}
+                onParamsChange={setSimulationParams}
+                onRun={handleRunSimulation}
+                onStop={stopSimulation}
+                onReset={handleReset}
+                isRunning={isRunning}
+                hasResults={!!simulationResult}
+                simProgress={simProgress}
+                selectedDesignName={currentDesignName}
+              />
+            </div>
           </div>
         </div>
 
@@ -251,6 +276,7 @@ export default function Simulator() {
             loadPreset={loadPreset}
             onSave={() => setIsSaveModalOpen(true)}
             onReset={handleResetCanvas}
+            selectedDesignName={currentDesignName}
           />
 
           {/* CANVAS */}

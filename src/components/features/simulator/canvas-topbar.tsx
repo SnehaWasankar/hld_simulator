@@ -14,48 +14,62 @@ interface Props {
   loadPreset: (id: string | null) => void;
   onSave: () => void;
   onReset: () => void;
+  selectedDesignName: string | null;
 }
 
-export default function CanvasTopBar({ loadPreset, onSave, onReset }: Props) {
+export default function CanvasTopBar({ loadPreset, onSave, onReset, selectedDesignName }: Props) {
   return (
     <div className="h-12 border-b bg-white flex items-center justify-between px-4">
 
     {/* LEFT — PRESETS */}
-    <Select onValueChange={loadPreset}>
+    <div className="flex items-center gap-2">
+
+      <Select onValueChange={loadPreset}>
         <SelectTrigger
-        className="h-8 text-xs px-3
-        bg-pink-500/20 text-pink-800 border border-pink-200
-        hover:bg-pink-500/30 hover:border-pink-400
-        font-medium transition-all duration-200"
+          className="h-8 text-xs px-3
+          bg-pink-500/20 text-pink-800 border border-pink-200
+          hover:bg-pink-500/30 hover:border-pink-400
+          font-medium transition-all duration-200"
         >
-        <span className="font-medium">Presets</span>
+          <span className="font-medium">Presets</span>
         </SelectTrigger>
 
         <SelectContent
-        side="bottom"
-        align="start"
-        sideOffset={8}
-        alignItemWithTrigger={false}
-        className="
-        w-(--radix-select-trigger-width)
-        max-h-35
-        overflow-y-auto
-        bg-white border border-indigo-100 shadow-xl rounded-lg p-1"
+          side="bottom"
+          align="start"
+          sideOffset={8}
+          alignItemWithTrigger={false}
+          className="
+          w-(--radix-select-trigger-width)
+          max-h-35
+          overflow-y-auto
+          bg-white border border-indigo-100 shadow-xl rounded-lg p-1"
         >
-        {PRESETS.map((p) => (
+          {PRESETS.map((p) => (
             <SelectItem key={p.id} value={p.id}>
-            <div className="flex flex-col leading-tight">
+              <div className="flex flex-col leading-tight">
                 <span className="font-medium text-gray-800 text-xs">
-                {p.name}
+                  {p.name}
                 </span>
                 <span className="text-[10px] text-gray-400 truncate">
-                {p.description}
+                  {p.description}
                 </span>
-            </div>
+              </div>
             </SelectItem>
-        ))}
+          ))}
         </SelectContent>
-    </Select>
+      </Select>
+
+      {selectedDesignName && (
+        <span className="
+          h-8 px-3 text-xs rounded-md
+          bg-gray-500/20 text-gray-700 border border-gray-200
+          font-medium inline-flex items-center
+        ">
+          {selectedDesignName}
+        </span>
+      )}
+    </div>
 
     {/* RIGHT — ACTIONS */}
     <div className="flex items-center gap-2">
@@ -67,7 +81,7 @@ export default function CanvasTopBar({ loadPreset, onSave, onReset }: Props) {
         hover:bg-green-500/30 hover:border-green-400
         font-medium transition-all duration-200"
         >
-        Save Design
+        Save
         </Button>
 
         <Button
@@ -77,7 +91,7 @@ export default function CanvasTopBar({ loadPreset, onSave, onReset }: Props) {
         hover:bg-yellow-500/30 hover:border-yellow-400
         font-medium transition-all duration-200"
         >
-        Reset
+        Clear {/* changed reset button name */}
         </Button>
 
     </div>
