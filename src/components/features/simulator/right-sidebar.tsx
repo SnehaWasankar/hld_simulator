@@ -87,7 +87,7 @@ export default function RightSidebar({
           </TabsList>
         </div>
 
-        <TabsContent value="components" className="flex-1 min-h-0 m-0 bg-white">
+        <TabsContent value="components" className="flex-1 min-h-0 m-0 bg-white pt-4">
           <div className="h-full overflow-y-auto">
             <ComponentPalette onAddComponent={addComponent} />
           </div>
