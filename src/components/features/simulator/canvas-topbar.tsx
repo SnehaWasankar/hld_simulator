@@ -75,7 +75,7 @@ export default function CanvasTopBar({ loadPreset, onSave, onReset, selectedDesi
     <div className="flex items-center gap-2">
 
         <Button
-        size="sm"
+        size="default"
         onClick={onSave}
         className="bg-green-500/20 text-green-700 border border-green-200 
         hover:bg-green-500/30 hover:border-green-400
@@ -85,7 +85,7 @@ export default function CanvasTopBar({ loadPreset, onSave, onReset, selectedDesi
         </Button>
 
         <Button
-        size="sm"
+        size="default"
         onClick={onReset}
         className="bg-yellow-500/20 text-yellow-800 border border-yellow-200 
         hover:bg-yellow-500/30 hover:border-yellow-400

@@ -43,16 +43,44 @@ export default function RightSidebar({
     <div className="border-l bg-white flex flex-col flex-shrink-0" style={{ width: rightPanelSize }}>
       <Tabs value={rightTab} onValueChange={(val) => setRightTab(val as string)} className="flex flex-col h-full">
         <div className="h-12 border-b bg-white flex items-center px-4">
-          <TabsList className="grid grid-cols-3 w-full h-8">
-            <TabsTrigger value="components" className="text-xs gap-1">
+          <TabsList className="flex w-full gap-2 bg-transparent p-0 rounded-none">
+            <TabsTrigger
+              value="components"
+              className="
+              h-8 px-3 text-xs gap-1
+              bg-white text-gray-700 border border-gray-200
+              hover:bg-gray-500/20 hover:border-gray-300
+              data-active:bg-gray-200
+              data-active:text-black
+              data-active:border-gray-400
+              font-medium transition-all duration-200"
+            >
               <LayoutGrid className="w-3 h-3" />
               Add
             </TabsTrigger>
-            <TabsTrigger value="config" className="text-xs gap-1">
+            <TabsTrigger value="config" 
+              className="
+              h-8 px-3 text-xs gap-1
+              bg-white text-gray-700 border border-gray-200
+              hover:bg-gray-500/20 hover:border-gray-300
+              data-active:bg-gray-200
+              data-active:text-black
+              data-active:border-gray-400
+              font-medium transition-all duration-200"
+            >
               <Settings2 className="w-3 h-3" />
               Config
             </TabsTrigger>
-            <TabsTrigger value="report" className="text-xs gap-1">
+            <TabsTrigger value="report" 
+              className="
+              h-8 px-3 text-xs gap-1
+              bg-white text-gray-700 border border-gray-200
+              hover:bg-gray-500/20 hover:border-gray-300
+              data-active:bg-gray-200
+              data-active:text-black
+              data-active:border-gray-400
+              font-medium transition-all duration-200"
+            >
               <BarChart3 className="w-3 h-3" />
               Report
             </TabsTrigger>
